@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
 import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon } from './constants';
@@ -52,7 +53,7 @@ const App: React.FC = () => {
             const vehiclesResult = await supabase
                 .from('vehicles')
                 .select('*')
-                .order('display_order', { ascending: true, nullsFirst: false })
+                .order('display_order', { ascending: true })
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
             

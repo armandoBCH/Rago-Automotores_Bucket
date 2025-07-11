@@ -1,6 +1,7 @@
 
 
 
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
@@ -53,7 +54,7 @@ export default async function handler(
         const { data: maxOrderData, error: maxOrderError } = await supabaseAdmin
             .from('vehicles')
             .select('display_order')
-            .order('display_order', { ascending: false, nullsFirst: false })
+            .order('display_order', { ascending: false })
             .limit(1)
             .single();
 

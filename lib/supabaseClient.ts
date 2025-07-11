@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './database.types';
 
@@ -6,8 +7,8 @@ import { Database } from './database.types';
 // las variables de entorno expuestas al navegador DEBEN tener un prefijo.
 // Vercel inyectará automáticamente las variables de entorno aquí.
 // Para desarrollo local, necesitarás un archivo .env.local
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
 
 if (!supabaseUrl || !supabaseAnonKey) {
