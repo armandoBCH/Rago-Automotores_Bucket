@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rago Automotores</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Encontrá tu próximo vehículo en Rago Automotores. Ofrecemos un catálogo de autos usados seleccionados en Olavarría. Calidad, confianza y la mejor financiación." />
+    <link rel="canonical" href="https://rago-automotores-demo.vercel.app/" />
+
+    <!-- Meta Tags for Social Sharing -->
+    <meta property="og:title" content="Rago Automotores - Catálogo de Vehículos" />
+    <meta property="og:description" content="Tu concesionaria de confianza para vehículos seleccionados. Calidad y transparencia en cada venta." />
+    <meta property="og:image" content="https://i.imgur.com/zOGb0ay.jpeg" />
+    <meta property="og:url" content="https://rago-automotores-demo.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Rago Automotores - Catálogo de Vehículos" />
+    <meta name="twitter:description" content="Tu concesionaria de confianza para vehículos seleccionados. Calidad y transparencia en cada venta." />
+    <meta name="twitter:image" content="https://i.imgur.com/zOGb0ay.jpeg" />
+
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dbq5jp6jn/image/upload/v1752059965/Captura_de_pantalla_2025-07-09_081854_aak0q0.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com/3.4.3"></script>
+    <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            'rago-black': '#0D0D0D',
+            'rago-burgundy': '#6C1E27',
+            'rago-burgundy-darker': '#50161D',
+            'rago-white': '#FFFFFF',
+            slate: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              200: '#e2e8f0',
+              300: '#cbd5e1',
+              400: '#94a3b8',
+              500: '#64748b',
+              600: '#475569',
+              700: '#334155',
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            },
+          },
+          boxShadow: {
+            'subtle': '0 4px 14px 0 rgba(0, 0, 0, 0.03)',
+            'subtle-hover': '0 6px 20px 0 rgba(0, 0, 0, 0.05)',
+            'subtle-dark': '0 0 0 1px rgba(255, 255, 255, 0.05), 0 4px 20px 0 rgba(108, 30, 39, 0.07)',
+            'subtle-hover-dark': '0 0 0 1px rgba(255, 255, 255, 0.05), 0 6px 20px 0 rgba(108, 30, 39, 0.07)',
+            'rago-md': '0 5px 15px -3px rgba(108, 30, 39, 0.15), 0 3px 6px -4px rgba(108, 30, 39, 0.15)',
+            'rago-lg': '0 10px 25px -5px rgba(108, 30, 39, 0.25), 0 8px 10px -6px rgba(108, 30, 39, 0.22)',
+            'rago-glow': '0 0 30px -5px rgba(108, 30, 39, 0.3)',
+          },
+        }
+      }
+    }
+    </script>
+    <style>
+        /* Increase base font size for better accessibility */
+        html {
+            font-size: 17px;
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom selection color */
+        ::selection {
+            background-color: #6C1E27;
+            color: #FFFFFF;
+        }
+
+        /* Custom scrollbar for better aesthetics that adapts to light/dark mode */
+        :root {
+            --scrollbar-track: #f1f5f9; /* slate-100 */
+            --scrollbar-thumb: #6C1E27;
+            --scrollbar-thumb-hover: #50161D;
+            --scrollbar-border: #f1f5f9;
+        }
+        html.dark {
+            --scrollbar-track: #0f172a; /* slate-900 */
+            --scrollbar-thumb: #6C1E27;
+            --scrollbar-thumb-hover: #50161D;
+            --scrollbar-border: #0f172a;
+        }
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--scrollbar-thumb);
+            border-radius: 6px;
+            border: 3px solid var(--scrollbar-border);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--scrollbar-thumb-hover);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes bg-pan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes soft-bounce {
+          0%, 100% {
+            transform: translateY(0);
+            animation-timing-function: ease-in-out;
+          }
+          50% {
+            transform: translateY(-8px);
+            animation-timing-function: ease-in-out;
+          }
+        }
+
+        @keyframes pulse-light {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+          }
+        }
+
+        @keyframes pulse-burgundy {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(108, 30, 39, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(108, 30, 39, 0);
+          }
+        }
+
+        @keyframes pulse-border {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 25px rgba(255, 255, 255, 0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-150%) skewX(-30deg); }
+            40% { transform: translateX(150%) skewX(-30deg); }
+            100% { transform: translateX(150%) skewX(-30deg); }
+        }
+
+        @keyframes aurora {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        
+        .animate-bg-pan {
+            animation: bg-pan 15s ease-in-out infinite;
+        }
+
+        .animate-pulse-light {
+            animation: pulse-light 2.5s infinite;
+        }
+
+        .animate-pulse-burgundy {
+            animation: pulse-burgundy 2.5s infinite;
+        }
+
+        .animate-pulse-border {
+            animation: pulse-border 2.5s infinite;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        
+        .animate-soft-bounce {
+            animation: soft-bounce 2.5s infinite;
+        }
+
+        .animate-aurora {
+            background: radial-gradient(ellipse at center, #0D0D0D 0%, #020617 100%),
+                        radial-gradient(ellipse at top left, rgba(108, 30, 39, 0.15), transparent 50%),
+                        radial-gradient(ellipse at bottom right, rgba(51, 65, 85, 0.15), transparent 50%);
+            background-size: 250% 250%;
+            animation: aurora 25s ease-in-out infinite;
+        }
+
+        .animate-shake {
+            animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        
+        .shimmer-effect {
+            position: relative;
+            overflow: hidden;
+            -webkit-mask-image: -webkit-radial-gradient(white, black); /* Fix for border-radius clipping */
+        }
+        .shimmer-effect::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 75%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            animation: shimmer 4s infinite ease-in-out;
+            z-index: 1;
+        }
+
+
+        .stagger-child {
+            opacity: 0;
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        
+        /* Hamburger Icon Animation */
+        #nav-icon3 {
+            width: 34px;
+            height: 28px;
+            position: relative;
+            transform: rotate(0deg);
+            transition: .5s ease-in-out;
+            cursor: pointer;
+        }
+
+        #nav-icon3 span {
+            display: block;
+            position: absolute;
+            height: 4px;
+            width: 100%;
+            background: currentColor;
+            border-radius: 9px;
+            opacity: 1;
+            left: 0;
+            transform: rotate(0deg);
+            transition: .25s ease-in-out;
+        }
+        #nav-icon3 span:nth-child(1) { top: 0px; }
+        #nav-icon3 span:nth-child(2),#nav-icon3 span:nth-child(3) { top: 12px; }
+        #nav-icon3 span:nth-child(4) { top: 24px; }
+        #nav-icon3.open span:nth-child(1) {
+            top: 12px;
+            width: 0%;
+            left: 50%;
+        }
+        #nav-icon3.open span:nth-child(2) {
+            transform: rotate(45deg);
+        }
+        #nav-icon3.open span:nth-child(3) {
+            transform: rotate(-45deg);
+        }
+        #nav-icon3.open span:nth-child(4) {
+            top: 12px;
+            width: 0%;
+            left: 50%;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom": "https://esm.sh/react-dom@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.50.4",
+    "@vercel/node": "https://esm.sh/@vercel/node@^5.3.4",
+    "react-dropzone": "https://esm.sh/react-dropzone@^14.3.8"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <div id="root"></div>
+    <div id="modal-root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
