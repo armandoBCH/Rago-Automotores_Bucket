@@ -7,9 +7,10 @@ import { HeartIcon, ArrowRightIcon } from '../constants';
 
 interface FavoritesPageProps {
     allVehicles: Vehicle[];
+    onPlayVideo: (url: string) => void;
 }
 
-const FavoritesPage: React.FC<FavoritesPageProps> = ({ allVehicles }) => {
+const FavoritesPage: React.FC<FavoritesPageProps> = ({ allVehicles, onPlayVideo }) => {
     const { favoriteIds } = useFavorites();
 
     const favoriteVehicles = React.useMemo(() => {
@@ -53,7 +54,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({ allVehicles }) => {
                     Tu selección personal de vehículos. Revisa tus autos preferidos y da el siguiente paso.
                 </p>
             </div>
-            <VehicleList vehicles={favoriteVehicles} />
+            <VehicleList vehicles={favoriteVehicles} onPlayVideo={onPlayVideo} />
         </div>
     );
 };

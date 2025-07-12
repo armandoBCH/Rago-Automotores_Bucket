@@ -1,18 +1,16 @@
 
-
-
-
 import React, { useState } from 'react';
 import { Vehicle } from '../types';
 import { optimizeUrl, slugify } from '../utils/image';
-import { ArrowRightIcon, StarIcon } from '../constants';
+import { ArrowRightIcon, StarIcon, PlayIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 
 interface VehicleCardProps {
     vehicle: Vehicle;
+    onPlayVideo: (url: string) => void;
 }
 
-const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
+const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPlayVideo }) => {
     const [isLoaded, setIsLoaded] = useState(false);
     
     const imageSrc = vehicle.images?.[0] || '';
@@ -23,6 +21,14 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
         .join(', ');
         
     const vehicleUrl = `/vehiculo/${slugify(`${vehicle.make} ${vehicle.model}`)}-${vehicle.id}`;
+    
+    const handlePlayClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (vehicle.video_url) {
+            onPlayVideo(vehicle.video_url);
+        }
+    };
 
     return (
         <div 
@@ -40,6 +46,15 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
                     <StarIcon className="h-4 w-4" filled={true} />
                     <span className="tracking-wide">DESTACADO</span>
                 </div>
+            )}
+             {vehicle.video_url && !vehicle.is_sold && (
+                <button
+                    onClick={handlePlayClick}
+                    aria-label="Reproducir video"
+                    className="absolute top-4 right-4 z-10 w-11 h-11 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-full text-white border-2 border-white/50 transition-all duration-300 transform group-hover:scale-110 group-hover:bg-rago-burgundy hover:!scale-110 hover:!bg-rago-burgundy"
+                >
+                    <PlayIcon className="h-5 w-5 ml-0.5" />
+                </button>
             )}
             <a href={vehicleUrl} className="block aspect-[4/3] overflow-hidden rounded-t-2xl">
                 <div 

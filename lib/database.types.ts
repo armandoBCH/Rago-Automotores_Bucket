@@ -49,6 +49,7 @@ export type Database = {
           is_featured: boolean
           is_sold: boolean
           display_order: number
+          video_url: string | null
         }
         Insert: {
           id?: number
@@ -67,6 +68,7 @@ export type Database = {
           is_featured?: boolean
           is_sold?: boolean
           display_order?: number
+          video_url?: string | null
         }
         Update: {
           id?: number
@@ -85,6 +87,7 @@ export type Database = {
           is_featured?: boolean
           is_sold?: boolean
           display_order?: number
+          video_url?: string | null
         }
         Relationships: []
       }

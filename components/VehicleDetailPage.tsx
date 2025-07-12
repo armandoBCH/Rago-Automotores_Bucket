@@ -1,9 +1,4 @@
 
-
-
-
-
-
 import React, { useMemo, useEffect, useRef } from 'react';
 import { Vehicle } from '../types';
 import ImageCarousel from './ImageCarousel';
@@ -18,6 +13,7 @@ import { useFavorites } from './FavoritesProvider';
 interface VehicleDetailPageProps {
     vehicle: Vehicle;
     allVehicles: Vehicle[];
+    onPlayVideo: (url: string) => void;
 }
 
 const SpecificationItem: React.FC<{ icon: React.ReactNode; label: string; value: string | number; }> = ({ icon, label, value }) => (
@@ -101,7 +97,7 @@ const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: st
 );
 
 
-const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles }) => {
+const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, onPlayVideo }) => {
     const similarVehiclesRef = useRef<HTMLDivElement>(null);
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
     const isCurrentlyFavorite = isFavorite(vehicle.id);
@@ -244,7 +240,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                     <div className="opacity-0 animate-fade-in-up">
                         <div className="-mx-4 md:-mx-6 lg:mx-0">
                             <div className="relative overflow-hidden lg:rounded-2xl lg:shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
-                                <ImageCarousel images={vehicle.images} />
+                                <ImageCarousel images={vehicle.images} videoUrl={vehicle.video_url} onPlayVideo={onPlayVideo} />
                                  {!vehicle.is_sold && (
                                     <button
                                         onClick={handleFavoriteClick}
@@ -303,7 +299,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                         <div ref={similarVehiclesRef} className="flex gap-6 -m-4 p-4 overflow-x-auto pb-6 hide-scrollbar">
                             {relatedVehicles.map((relatedVehicle, index) => (
                                 <div key={relatedVehicle.id} className="flex-shrink-0 w-[85%] sm:w-[45%] md:w-[40%] lg:w-[30%] xl:w-1/4 stagger-child" style={{ animationDelay: `${index * 80}ms` }}>
-                                    <VehicleCard vehicle={relatedVehicle} />
+                                    <VehicleCard vehicle={relatedVehicle} onPlayVideo={onPlayVideo} />
                                 </div>
                             ))}
                         </div>

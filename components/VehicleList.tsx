@@ -1,12 +1,14 @@
+
 import React from 'react';
 import { Vehicle } from '../types';
 import VehicleCard from './VehicleCard';
 
 interface VehicleListProps {
     vehicles: Vehicle[];
+    onPlayVideo: (url: string) => void;
 }
 
-const VehicleList: React.FC<VehicleListProps> = ({ vehicles }) => {
+const VehicleList: React.FC<VehicleListProps> = ({ vehicles, onPlayVideo }) => {
     if (vehicles.length === 0) {
         return (
             <div className="text-center py-16">
@@ -20,7 +22,7 @@ const VehicleList: React.FC<VehicleListProps> = ({ vehicles }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {vehicles.map((vehicle, index) => (
                 <div key={vehicle.id} className="stagger-child" style={{ animationDelay: `${index * 70}ms` }}>
-                    <VehicleCard vehicle={vehicle} />
+                    <VehicleCard vehicle={vehicle} onPlayVideo={onPlayVideo} />
                 </div>
             ))}
         </div>

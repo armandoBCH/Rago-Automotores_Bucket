@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Vehicle, VehicleFormData } from '../types';
 import { XIcon } from '../constants';
@@ -13,18 +10,19 @@ import { supabase } from '../lib/supabaseClient';
 
 const DRAFT_STORAGE_KEY = 'rago-new-vehicle-draft';
 
-type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'created_at' | 'images' | 'display_order' | 'fuelType'> & {
+type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'created_at' | 'images' | 'display_order' | 'fuelType' | 'video_url'> & {
     year: string;
     price: string;
     mileage: string;
     fuelType: string;
     customFuelType?: string;
+    video_url: string;
 };
 
 const getInitialFormState = (): FormDataState => ({
     make: '', model: '', year: '', price: '', mileage: '', engine: '',
     transmission: 'Manual', fuelType: 'Nafta', vehicle_type: '', customFuelType: '', description: '',
-    is_featured: false, is_sold: false,
+    is_featured: false, is_sold: false, video_url: ''
 });
 
 interface VehicleFormModalProps {
@@ -73,6 +71,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                     vehicle_type: initialData.vehicle_type || '',
                     fuelType: isStandard ? initialData.fuelType : 'Otro',
                     customFuelType: isStandard ? '' : initialData.fuelType,
+                    video_url: initialData.video_url || ''
                 });
                 setImageFiles(images.map(url => ({ id: url, file: null, preview: url, url, status: 'complete' })));
             } else { // Adding a new vehicle
@@ -123,6 +122,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             is_featured: formData.is_featured,
             is_sold: formData.is_sold,
             display_order: initialData?.display_order ?? 0,
+            video_url: formData.video_url || null,
         };
     }, [formData, imageFiles, initialData, isOtherFuelType]);
 
@@ -222,6 +222,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             images: finalImageUrls,
             is_featured: formData.is_featured,
             is_sold: formData.is_sold,
+            video_url: formData.video_url || null,
         };
 
         onSubmit(vehicleToSubmit);
@@ -260,6 +261,10 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                                  <div><label htmlFor="fuelType" className="block text-base font-medium text-gray-700 dark:text-gray-300">Tipo de Combustible</label><select id="fuelType" name="fuelType" value={formData.fuelType} onChange={handleChange} className="mt-1 form-input"><option>Nafta</option><option>Diesel</option><option>GNC</option><option value="Otro">Otro</option></select></div>
                                 {isOtherFuelType && <div><label htmlFor="customFuelType" className="block text-base font-medium text-gray-700 dark:text-gray-300">Especificar Combustible</label><input id="customFuelType" name="customFuelType" type="text" value={formData.customFuelType || ''} onChange={handleChange} required={isOtherFuelType} className="mt-1 form-input" placeholder="Ej: Eléctrico"/></div>}
                             </div>
+                            <div>
+                                <InputField label="URL de Video (Opcional)" name="video_url" type="url" value={formData.video_url || ''} onChange={handleChange} placeholder="https://youtube.com/shorts/..." />
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Pega aquí la URL de un YouTube Short o Instagram Reel.</p>
+                            </div>
                             <div className="col-span-full flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3 pt-2">
                                 <div className="flex items-center gap-3">
                                     <input id="is_featured" name="is_featured" type="checkbox" checked={formData.is_featured} onChange={handleCheckboxChange} disabled={formData.is_sold} className="h-5 w-5 rounded border-gray-300 text-rago-burgundy focus:ring-rago-burgundy-darker dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50" />
@@ -287,7 +292,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                                 <button onClick={() => setPreviewMode('card')} className={`w-full rounded-md py-2 text-sm font-medium transition-colors ${previewMode === 'card' ? 'bg-white dark:bg-gray-900 text-rago-burgundy shadow' : 'text-gray-600 dark:text-gray-400'}`}>Vista Tarjeta</button>
                                 <button onClick={() => setPreviewMode('detail')} className={`w-full rounded-md py-2 text-sm font-medium transition-colors ${previewMode === 'detail' ? 'bg-white dark:bg-gray-900 text-rago-burgundy shadow' : 'text-gray-600 dark:text-gray-400'}`}>Vista Detalle</button>
                             </div>
-                            {previewMode === 'card' ? <VehicleCard vehicle={previewVehicle} /> : <VehicleDetailPreview vehicle={previewVehicle} />}
+                            {previewMode === 'card' ? <VehicleCard vehicle={previewVehicle} onPlayVideo={() => {}} /> : <VehicleDetailPreview vehicle={previewVehicle} />}
                         </div>
                     </div>
                 </div>
@@ -313,7 +318,7 @@ const VehicleDetailPreview: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
     <div className="border rounded-lg dark:border-gray-600 bg-gray-50 dark:bg-gray-800 shadow-inner">
         <div className="max-h-[calc(90vh - 160px)] overflow-y-auto preview-scrollbar">
             <div className="relative aspect-[4/3] bg-gray-200 dark:bg-black overflow-hidden">
-                <ImageCarousel images={vehicle.images} />
+                <ImageCarousel images={vehicle.images} videoUrl={vehicle.video_url} onPlayVideo={() => alert("La previsualización del video se activa en la vista real.")} />
                 {vehicle.is_sold && (
                     <div className="absolute top-0 left-0 w-64 h-64 overflow-hidden z-20 pointer-events-none">
                         <div

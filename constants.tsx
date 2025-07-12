@@ -1,6 +1,4 @@
 
-
-
 import { Vehicle } from './types';
 
 export const SearchIcon = ({ className }: { className?: string }) => (
@@ -152,6 +150,13 @@ export const GasPumpIcon = ({ className }: { className?: string }) => (
         <path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/>
     </svg>
 );
+
+export const PlayIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+  </svg>
+);
+
 
 // Icons for Footer
 export const LocationPinIcon = ({ className }: { className?: string }) => (

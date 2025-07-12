@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Vehicle } from '../types';
 import { useFavorites } from './FavoritesProvider';
@@ -7,9 +8,10 @@ import { ArrowLeftIcon, ArrowRightIcon } from '../constants';
 
 interface FavoritesSectionProps {
     allVehicles: Vehicle[];
+    onPlayVideo: (url: string) => void;
 }
 
-const FavoritesSection: React.FC<FavoritesSectionProps> = ({ allVehicles }) => {
+const FavoritesSection: React.FC<FavoritesSectionProps> = ({ allVehicles, onPlayVideo }) => {
     const { favoriteIds } = useFavorites();
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
@@ -50,7 +52,7 @@ const FavoritesSection: React.FC<FavoritesSectionProps> = ({ allVehicles }) => {
                  <div ref={scrollContainerRef} className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar">
                     {favoriteVehicles.map((vehicle) => (
                         <div key={vehicle.id} className="flex-shrink-0 w-[85%] sm:w-[45%] md:w-[40%] lg:w-[30%] xl:w-[23%]">
-                            <VehicleCard vehicle={vehicle} />
+                            <VehicleCard vehicle={vehicle} onPlayVideo={onPlayVideo} />
                         </div>
                     ))}
                 </div>

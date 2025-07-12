@@ -6,6 +6,7 @@ import { XIcon, ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIc
 interface VehicleDetailModalProps {
     vehicle: Vehicle;
     onClose: () => void;
+    onPlayVideo: (url: string) => void;
 }
 
 const SpecificationItem: React.FC<{ icon: React.ReactNode; label: string; value: string | number; }> = ({ icon, label, value }) => (
@@ -18,7 +19,7 @@ const SpecificationItem: React.FC<{ icon: React.ReactNode; label: string; value:
     </div>
 );
 
-const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle, onClose }) => {
+const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle, onClose, onPlayVideo }) => {
     const contactMessage = `Hola, estoy interesado en el ${vehicle.make} ${vehicle.model}.`;
     const whatsappLink = `https://wa.me/5492284635692?text=${encodeURIComponent(contactMessage)}`;
 
@@ -42,7 +43,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle, onClos
                         {/* Main Content (Image, Specs, Description) */}
                         <div className="lg:col-span-3">
                             <div className="aspect-[4/3] bg-gray-200 dark:bg-black rounded-lg overflow-hidden shadow-lg mb-8">
-                                <ImageCarousel images={vehicle.images} />
+                                <ImageCarousel images={vehicle.images} videoUrl={vehicle.video_url} onPlayVideo={onPlayVideo} />
                             </div>
                             
                             <div className="space-y-10">

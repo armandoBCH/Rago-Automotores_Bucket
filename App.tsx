@@ -20,6 +20,7 @@ import ScrollToTopButton from './components/ScrollToTopButton';
 import FeaturedVehiclesSection from './components/FeaturedVehiclesSection';
 import FavoritesPage from './components/FavoritesPage';
 import { useFavorites } from './components/FavoritesProvider';
+import VerticalVideoPlayer from './components/VerticalVideoPlayer';
 
 type ModalState = 
     | { type: 'none' }
@@ -38,6 +39,7 @@ const App: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [visibleCount, setVisibleCount] = useState(8);
+    const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
     
     const { favoriteIds } = useFavorites();
     const favoritesCount = favoriteIds.length;
@@ -55,7 +57,7 @@ const App: React.FC = () => {
             // Fetch vehicles always, now sorted by the new custom order field
             const vehiclesResult = await supabase
                 .from('vehicles')
-                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,vehicle_type,description,images,is_featured,is_sold,display_order')
+                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
                 .order('display_order', { ascending: true, nullsFirst: false })
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
@@ -416,12 +418,12 @@ const App: React.FC = () => {
     const renderPublicContent = () => {
         if (loading) return <div className="text-center py-16">Cargando...</div>;
         if (dbError) return <div className="text-center py-16 text-red-500">{dbError}</div>;
-        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} /> : <NotFoundPage />;
-        if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} />;
+        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl} /> : <NotFoundPage />;
+        if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl}/>;
         if (isHomePage) return (
             <>
                 <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />
-                <VehicleList vehicles={vehiclesToShow} />
+                <VehicleList vehicles={vehiclesToShow} onPlayVideo={setPlayingVideoUrl} />
                 {hasMoreVehicles && (
                      <div className="text-center mt-12 animate-fade-in">
                         <button
@@ -447,6 +449,7 @@ const App: React.FC = () => {
 
     return (
         <div className="bg-slate-800 dark:bg-rago-black min-h-screen overflow-x-hidden">
+             {playingVideoUrl && <VerticalVideoPlayer url={playingVideoUrl} onClose={() => setPlayingVideoUrl(null)} />}
              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className={hamburgerClasses} aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"} aria-controls="mobile-menu" aria-expanded={isMobileMenuOpen}>
                 <div id="nav-icon3" className={isMobileMenuOpen ? 'open' : ''}><span></span><span></span><span></span><span></span></div>
             </button>
@@ -482,7 +485,7 @@ const App: React.FC = () => {
                 {isMobileMenuOpen && <div role="button" aria-label="Cerrar menú" className="absolute inset-0 z-50" onClick={() => setIsMobileMenuOpen(false)}></div>}
                 <Header />
                 {isHomePage && <Hero searchTerm={searchTerm} onSearchChange={setSearchTerm} />}
-                {isHomePage && <FeaturedVehiclesSection vehicles={vehicles} />}
+                {isHomePage && <FeaturedVehiclesSection vehicles={vehicles} onPlayVideo={setPlayingVideoUrl} />}
                 <main id="catalog" className="container mx-auto px-4 md:px-6 py-8 flex-grow">
                      <div key={path} className="animate-fade-in">{renderPublicContent()}</div>
                 </main>

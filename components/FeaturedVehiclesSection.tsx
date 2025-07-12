@@ -1,12 +1,10 @@
 
-
-
 import React from 'react';
 import { Vehicle } from '../types';
 import { ArrowLeftIcon, ArrowRightIcon } from '../constants';
 import VehicleCard from './VehicleCard'; // Importar la tarjeta estándar
 
-const FeaturedVehiclesSection: React.FC<{ vehicles: Vehicle[] }> = ({ vehicles }) => {
+const FeaturedVehiclesSection: React.FC<{ vehicles: Vehicle[], onPlayVideo: (url: string) => void }> = ({ vehicles, onPlayVideo }) => {
     const scrollContainerRef = React.useRef<HTMLDivElement>(null);
 
     const featuredVehicles = React.useMemo(() => {
@@ -43,7 +41,7 @@ const FeaturedVehiclesSection: React.FC<{ vehicles: Vehicle[] }> = ({ vehicles }
                         {featuredVehicles.map((vehicle) => (
                              <div key={vehicle.id} className="flex-shrink-0 w-[85%] sm:w-1/2 md:w-1/3 lg:w-1/4">
                                 <div className="animate-pulse-border rounded-xl h-full">
-                                    <VehicleCard vehicle={vehicle} />
+                                    <VehicleCard vehicle={vehicle} onPlayVideo={onPlayVideo} />
                                 </div>
                             </div>
                         ))}
