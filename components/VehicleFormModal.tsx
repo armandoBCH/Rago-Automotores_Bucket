@@ -61,7 +61,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                 localStorage.removeItem(DRAFT_STORAGE_KEY);
                 const standardFuelTypes = ['Nafta', 'Diesel', 'GNC'];
                 const isStandard = standardFuelTypes.includes(initialData.fuelType);
-                const { created_at, id, images, ...rest } = initialData;
+                const { created_at, id, images, display_order, ...rest } = initialData;
                 setFormData({
                     ...rest,
                     year: String(initialData.year),

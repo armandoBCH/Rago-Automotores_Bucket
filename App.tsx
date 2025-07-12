@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
 import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon } from './constants';
@@ -11,7 +13,7 @@ import Hero from './components/Hero';
 import FilterBar from './components/FilterBar';
 import VehicleList from './components/VehicleList';
 import VehicleDetailPage from './components/VehicleDetailPage';
-import AdminPanel from './components/AdminPanel';
+import { AdminPanel } from './components/AdminPanel';
 import VehicleFormModal from './components/VehicleFormModal';
 import ConfirmationModal from './components/ConfirmationModal';
 import Footer from './components/Footer';
@@ -342,34 +344,6 @@ const App: React.FC = () => {
         }
     };
     
-    const handleReorderVehicles = async (reorderedVehicles: Vehicle[]) => {
-        // Optimistic update
-        setVehicles(reorderedVehicles);
-
-        const orderPayload = reorderedVehicles.map((vehicle, index) => ({
-            id: vehicle.id,
-            display_order: index,
-        }));
-
-        try {
-            const response = await fetch('/api/reorder-vehicles', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vehicles: orderPayload }),
-            });
-            if (!response.ok) {
-                // Revert on error
-                console.error("Failed to save new order, reverting.");
-                await fetchAllData(); 
-                alert("No se pudo guardar el nuevo orden.");
-            }
-        } catch (error) {
-            console.error("Error saving new order:", error);
-            await fetchAllData();
-            alert("Ocurrió un error al guardar el nuevo orden.");
-        }
-    };
-    
     const handleAnalyticsReset = () => fetchAllData();
     const NotFoundPage = () => (
         <div className="text-center py-16"><h1 className="text-4xl font-bold text-rago-burgundy mb-4">404</h1><p>Página No Encontrada</p><a href="/" className="mt-8 inline-block px-6 py-3 font-semibold text-white bg-rago-burgundy rounded-lg">Volver al Inicio</a></div>
@@ -397,7 +371,6 @@ const App: React.FC = () => {
                         onAnalyticsReset={handleAnalyticsReset} 
                         onToggleFeatured={handleToggleFeatured}
                         onToggleSold={handleToggleSold}
-                        onReorder={handleReorderVehicles}
                     />
                 </main>
                 {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} />}
