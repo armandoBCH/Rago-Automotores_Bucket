@@ -1,10 +1,9 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon as WhatsAppIcon, FileCheckIcon, SellCarIcon, ShareIcon, InstagramIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon } from '../constants';
+import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon as WhatsAppIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
-import VehiclePerformanceTable from './VehiclePerformanceTable';
-import VehicleStatsModal from './VehicleStatsModal'; // Assuming this component exists
+import VehicleStatsModal from './VehicleStatsModal';
 
 interface AdminPanelProps {
     vehicles: Vehicle[];
@@ -16,6 +15,7 @@ interface AdminPanelProps {
     onAnalyticsReset: () => void;
     onToggleFeatured: (vehicleId: number, currentStatus: boolean) => void;
     onToggleSold: (vehicleId: number, currentStatus: boolean) => void;
+    onReorder: (reorderedVehicles: Vehicle[]) => void;
 }
 
 const StatCard: React.FC<{ title: string, value: string | number, icon: React.ReactNode }> = ({ title, value, icon }) => (
@@ -30,7 +30,6 @@ const StatCard: React.FC<{ title: string, value: string | number, icon: React.Re
     </div>
 );
 
-
 export const AdminPanel: React.FC<AdminPanelProps> = ({
     vehicles,
     allEvents,
@@ -41,6 +40,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     onAnalyticsReset,
     onToggleFeatured,
     onToggleSold,
+    onReorder,
 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState<'all' | 'active' | 'sold' | 'featured'>('all');
@@ -63,12 +63,58 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         return tempVehicles;
     }, [vehicles, filter, searchTerm]);
 
+    const [orderedVehicles, setOrderedVehicles] = useState(filteredVehicles);
+    const dragItem = useRef<number | null>(null);
+    const dragOverItem = useRef<number | null>(null);
+
+    useEffect(() => {
+        setOrderedVehicles(filteredVehicles);
+    }, [filteredVehicles]);
+
+    const isReorderEnabled = filter === 'all' && searchTerm === '';
+
+    const handleDragStart = (position: number) => {
+        dragItem.current = position;
+    };
+    
+    const handleDragEnter = (position: number) => {
+        if (dragItem.current === null) return;
+
+        const newOrderedVehicles = [...orderedVehicles];
+        const draggedItemContent = newOrderedVehicles.splice(dragItem.current, 1)[0];
+        newOrderedVehicles.splice(position, 0, draggedItemContent);
+        dragItem.current = position;
+        setOrderedVehicles(newOrderedVehicles);
+    };
+
+    const handleDragEnd = () => {
+        if (dragItem.current !== null) {
+            onReorder(orderedVehicles);
+        }
+        dragItem.current = null;
+        dragOverItem.current = null;
+    };
+
+    const performanceData = useMemo(() => {
+        const data = new Map<number, { views: number, contactRate: string }>();
+        vehicles.forEach(vehicle => {
+            const vehicleEvents = allEvents.filter(e => e.vehicle_id === vehicle.id);
+            const views = vehicleEvents.filter(e => e.event_type === 'view_vehicle').length;
+            const contacts = vehicleEvents.filter(e => e.event_type === 'click_whatsapp').length;
+            const contactRate = views > 0 ? ((contacts / views) * 100).toFixed(1) + '%' : '0.0%';
+            data.set(vehicle.id, { views, contactRate });
+        });
+        return data;
+    }, [vehicles, allEvents]);
+
     const stats = useMemo(() => {
         const totalViews = allEvents.filter(e => e.event_type === 'view_vehicle').length;
         const totalContacts = allEvents.filter(e => e.event_type === 'click_whatsapp').length;
         const totalShares = allEvents.filter(e => e.event_type === 'click_share').length;
-        return { totalViews, totalContacts, totalShares };
-    }, [allEvents]);
+        const activeVehicles = vehicles.filter(v => !v.is_sold).length;
+        const featuredVehicles = vehicles.filter(v => v.is_featured).length;
+        return { totalViews, totalContacts, totalShares, activeVehicles, featuredVehicles };
+    }, [allEvents, vehicles]);
 
     const handleResetAnalytics = async () => {
         const password = prompt("Para confirmar, por favor ingrese la contraseña de administrador:");
@@ -93,7 +139,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         }
     };
     
-
     return (
         <div className="space-y-8 text-slate-800 dark:text-slate-200">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -110,18 +155,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </button>
             </div>
             
-            {/* Stats Section */}
             <div>
                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Estadísticas Globales</h2>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard title="Vehículos Activos" value={vehicles.filter(v => !v.is_sold).length} icon={<SellCarIcon className="h-7 w-7"/>} />
+                    <StatCard title="Vehículos Activos" value={stats.activeVehicles} icon={<CircleDollarSignIcon className="h-7 w-7"/>} />
                     <StatCard title="Total de Vistas" value={stats.totalViews.toLocaleString()} icon={<EyeIcon className="h-7 w-7"/>} />
                     <StatCard title="Total de Contactos" value={stats.totalContacts.toLocaleString()} icon={<WhatsAppIcon className="h-7 w-7"/>} />
-                    <StatCard title="Total de Destacados" value={vehicles.filter(v => v.is_featured).length} icon={<StarIcon className="h-7 w-7"/>} />
+                    <StatCard title="Total de Destacados" value={stats.featuredVehicles} icon={<StarIcon className="h-7 w-7"/>} />
                 </div>
             </div>
 
-            {/* Vehicle Management Section */}
             <div className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800/50">
                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
                      <div>
@@ -136,7 +179,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         Añadir Vehículo
                     </button>
                 </div>
-                {/* Filters and Search */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-4">
                      <div className="relative flex-grow">
                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -162,21 +204,40 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                         <option value="sold">Vendidos</option>
                     </select>
                 </div>
+                {!isReorderEnabled && (
+                    <div className="mb-4 p-3 text-sm text-center bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-500/50">
+                        El reordenamiento manual está deshabilitado mientras se usan filtros o la búsqueda.
+                    </div>
+                )}
                  <div className="overflow-x-auto">
                     <table className="w-full text-base text-left text-slate-600 dark:text-slate-300">
                         <thead className="text-sm text-slate-700 uppercase bg-slate-100 dark:bg-slate-800 dark:text-slate-400">
                             <tr>
-                                <th scope="col" className="p-4 w-12"></th>
+                                <th scope="col" className="p-4 w-12 text-center" title="Reordenar">#</th>
                                 <th scope="col" className="p-4">Vehículo</th>
+                                <th scope="col" className="p-4 text-center">Vistas</th>
+                                <th scope="col" className="p-4 text-center">Tasa Contacto</th>
                                 <th scope="col" className="p-4 text-center">Destacado</th>
                                 <th scope="col" className="p-4 text-center">Vendido</th>
                                 <th scope="col" className="p-4 text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredVehicles.map(vehicle => (
-                                <tr key={vehicle.id} className={`border-b dark:border-slate-700 ${vehicle.is_sold ? 'bg-slate-100 dark:bg-slate-800/30 opacity-60' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
-                                    <td className="p-4 text-slate-400 cursor-grab"><GripVerticalIcon/></td>
+                            {orderedVehicles.map((vehicle, index) => {
+                                const perf = performanceData.get(vehicle.id);
+                                return (
+                                <tr 
+                                    key={vehicle.id} 
+                                    className={`border-b dark:border-slate-700 ${vehicle.is_sold ? 'bg-slate-100 dark:bg-slate-800/30 opacity-60' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'} ${isReorderEnabled ? 'cursor-grab' : ''}`}
+                                    draggable={isReorderEnabled}
+                                    onDragStart={() => handleDragStart(index)}
+                                    onDragEnter={() => handleDragEnter(index)}
+                                    onDragEnd={handleDragEnd}
+                                    onDragOver={(e) => e.preventDefault()}
+                                >
+                                    <td className="p-4 text-slate-400 text-center">
+                                        {isReorderEnabled ? <GripVerticalIcon className="inline-block" /> : <span>{index + 1}</span>}
+                                    </td>
                                     <td className="p-4">
                                         <div className="flex items-center gap-4">
                                             <img src={optimizeUrl(vehicle.images[0], { w: 80, h: 60, fit: 'cover' })} alt={`${vehicle.make} ${vehicle.model}`} className="w-20 h-15 object-cover rounded-md flex-shrink-0 bg-slate-200 dark:bg-slate-700"/>
@@ -186,6 +247,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                             </div>
                                         </div>
                                     </td>
+                                    <td className="p-4 font-semibold text-center">{perf?.views ?? 0}</td>
+                                    <td className="p-4 font-semibold text-center">{perf?.contactRate ?? '0.0%'}</td>
                                     <td className="p-4 text-center">
                                          <button onClick={() => onToggleFeatured(vehicle.id, vehicle.is_featured)} disabled={vehicle.is_sold} className="disabled:opacity-30 disabled:cursor-not-allowed">
                                             <StarIcon className={`h-6 w-6 transition-colors ${vehicle.is_featured ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`} filled={vehicle.is_featured} />
@@ -207,17 +270,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                  </div>
             </div>
-
-            {/* Performance Section */}
-             <div>
-                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Rendimiento por Vehículo</h2>
-                 <VehiclePerformanceTable vehicles={vehicles} events={allEvents} />
-             </div>
              
              {/* Danger Zone */}
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 p-6 rounded-2xl">

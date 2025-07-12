@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
 import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon } from './constants';
@@ -54,7 +56,7 @@ const App: React.FC = () => {
             // Fetch vehicles always, now sorted by the new custom order field
             const vehiclesResult = await supabase
                 .from('vehicles')
-                .select('*')
+                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,description,images,is_featured,is_sold,display_order')
                 .order('display_order', { ascending: true, nullsFirst: false })
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
@@ -344,6 +346,31 @@ const App: React.FC = () => {
         }
     };
     
+    const handleReorder = async (reorderedItems: Vehicle[]) => {
+        const originalVehicles = [...vehicles];
+        
+        // Optimistic update
+        setVehicles(reorderedItems);
+    
+        const updatePayload = reorderedItems.map((vehicle, index) => ({
+            id: vehicle.id,
+            display_order: index
+        }));
+        
+        try {
+            const response = await fetch('/api/reorder-vehicles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vehicles: updatePayload }),
+            });
+            if (!response.ok) throw new Error('API call failed');
+        } catch (error) {
+            alert('No se pudo guardar el nuevo orden.');
+            // Revert optimistic update
+            setVehicles(originalVehicles);
+        }
+    };
+    
     const handleAnalyticsReset = () => fetchAllData();
     const NotFoundPage = () => (
         <div className="text-center py-16"><h1 className="text-4xl font-bold text-rago-burgundy mb-4">404</h1><p>Página No Encontrada</p><a href="/" className="mt-8 inline-block px-6 py-3 font-semibold text-white bg-rago-burgundy rounded-lg">Volver al Inicio</a></div>
@@ -371,6 +398,7 @@ const App: React.FC = () => {
                         onAnalyticsReset={handleAnalyticsReset} 
                         onToggleFeatured={handleToggleFeatured}
                         onToggleSold={handleToggleSold}
+                        onReorder={handleReorder}
                     />
                 </main>
                 {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} />}
