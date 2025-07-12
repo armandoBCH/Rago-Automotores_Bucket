@@ -21,9 +21,9 @@ interface VehicleDetailPageProps {
 }
 
 const SpecificationItem: React.FC<{ icon: React.ReactNode; label: string; value: string | number; }> = ({ icon, label, value }) => (
-    <div className="flex items-center justify-between py-4">
+    <div className="flex items-center justify-between py-3">
         <div className="flex items-center">
-            <div className="flex-shrink-0 w-11 h-11 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mr-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mr-3">
                <span className="text-rago-burgundy">{icon}</span>
             </div>
             <div>
