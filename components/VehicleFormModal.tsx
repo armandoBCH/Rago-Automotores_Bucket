@@ -262,8 +262,8 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                                 {isOtherFuelType && <div><label htmlFor="customFuelType" className="block text-base font-medium text-gray-700 dark:text-gray-300">Especificar Combustible</label><input id="customFuelType" name="customFuelType" type="text" value={formData.customFuelType || ''} onChange={handleChange} required={isOtherFuelType} className="mt-1 form-input" placeholder="Ej: Eléctrico"/></div>}
                             </div>
                             <div>
-                                <InputField label="URL de Video (Opcional)" name="video_url" type="url" value={formData.video_url || ''} onChange={handleChange} placeholder="https://youtube.com/shorts/..." />
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Pega aquí la URL de un YouTube Short o Instagram Reel.</p>
+                                <InputField label="URL de Video (Opcional)" name="video_url" type="url" value={formData.video_url || ''} onChange={handleChange} placeholder="https://youtube.com/shorts/... o video de Cloudinary" />
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Pega aquí la URL de un YouTube Short, Instagram Reel o video de Cloudinary.</p>
                             </div>
                             <div className="col-span-full flex flex-col sm:flex-row sm:items-center gap-x-6 gap-y-3 pt-2">
                                 <div className="flex items-center gap-3">
