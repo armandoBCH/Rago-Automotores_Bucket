@@ -36,14 +36,13 @@ export default async function handler(
     
     const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
-    const { error } = await supabaseAdmin
-        .from('vehicles')
-        .upsert(vehicles as Database['public']['Tables']['vehicles']['Update'][], {
-            defaultToNull: false, // This is the fix. It prevents setting other columns to NULL.
-        });
+    // Call the PostgreSQL function for a robust, atomic update.
+    const { error } = await supabaseAdmin.rpc('reorder_vehicles', {
+      updates: vehicles
+    });
 
     if (error) {
-        console.error('Error reordering vehicles:', error);
+        console.error('Error reordering vehicles via RPC:', error);
         return response.status(500).json({ message: 'Error updating vehicle order.', details: error.message });
     }
 

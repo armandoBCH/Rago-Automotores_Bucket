@@ -1,8 +1,8 @@
-
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
+
+type AnalyticsEventInsert = Database['public']['Tables']['analytics_events']['Insert'];
 
 export default async function handler(
   request: VercelRequest,
@@ -22,7 +22,7 @@ export default async function handler(
   }
 
   try {
-    const eventData = request.body;
+    const eventData = request.body as AnalyticsEventInsert;
     
     // Basic validation
     if (!eventData || typeof eventData.event_type !== 'string') {
@@ -41,7 +41,7 @@ export default async function handler(
 
     const { error } = await supabaseAdmin
       .from('analytics_events')
-      .insert([eventData] as Database['public']['Tables']['analytics_events']['Insert'][]);
+      .insert([eventData]);
 
     if (error) {
       console.error('Error inserting analytics event:', error);

@@ -28,7 +28,15 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicles: {
         Row: {
@@ -89,7 +97,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reorder_vehicles: {
+        Args: {
+          updates: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
