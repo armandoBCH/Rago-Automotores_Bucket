@@ -31,7 +31,7 @@ const SpecificationItem: React.FC<{ icon: React.ReactNode; label: string; value:
 );
 
 const Breadcrumb: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
-    <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm rounded-xl py-3 px-5 border border-slate-200 dark:border-slate-800 shadow-sm mb-8">
+    <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm rounded-xl py-3 px-5 border border-slate-200 dark:border-slate-800 shadow-sm">
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-base font-medium text-slate-500 dark:text-slate-400 flex-wrap">
             <a href="/" className="hover:text-rago-burgundy transition-colors">Inicio</a>
             <ArrowRightIcon className="h-4 w-4 text-slate-400" />
@@ -228,7 +228,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
 
     return (
         <div className="max-w-screen-xl mx-auto">
-            <div className="opacity-0 animate-fade-in-up">
+            <div className="hidden lg:block mb-8 opacity-0 animate-fade-in-up">
                 <Breadcrumb vehicle={vehicle} />
             </div>
 
@@ -266,6 +266,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
 
                     {/* Content for Mobile */}
                     <div className="lg:hidden space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+                        <Breadcrumb vehicle={vehicle} />
                         <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} />
                         <SpecsCard specs={specs} />
                         <DescriptionCard description={vehicle.description} />
