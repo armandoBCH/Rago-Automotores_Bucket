@@ -4,8 +4,7 @@
 import React, { useState } from 'react';
 import { Vehicle } from '../types';
 import { optimizeUrl, slugify } from '../utils/image';
-import { ArrowRightIcon, StarIcon, HeartIcon } from '../constants';
-import { useFavorites } from './FavoritesProvider';
+import { ArrowRightIcon, StarIcon } from '../constants';
 
 interface VehicleCardProps {
     vehicle: Vehicle;
@@ -13,8 +12,6 @@ interface VehicleCardProps {
 
 const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
     const [isLoaded, setIsLoaded] = useState(false);
-    const { addFavorite, removeFavorite, isFavorite } = useFavorites();
-    const isCurrentlyFavorite = isFavorite(vehicle.id);
     
     const imageSrc = vehicle.images?.[0] || '';
 
@@ -25,25 +22,22 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
         
     const vehicleUrl = `/vehiculo/${slugify(`${vehicle.make} ${vehicle.model}`)}-${vehicle.id}`;
 
-    const handleFavoriteClick = (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent navigation when clicking the favorite button
-        e.stopPropagation();
-        if (isCurrentlyFavorite) {
-            removeFavorite(vehicle.id);
-        } else {
-            addFavorite(vehicle.id);
-        }
-    };
-
     return (
         <div 
             className={`relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden flex flex-col transition-all duration-300 ease-out shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-800 ${!vehicle.is_sold && 'hover:shadow-rago-lg dark:hover:shadow-rago-glow dark:hover:border-rago-burgundy/40 hover:-translate-y-1.5'} group`}
         >
              {vehicle.is_sold && (
-                <div className="absolute top-0 left-0 w-48 h-48 overflow-hidden z-20 pointer-events-none">
-                    <div 
-                        className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-700 text-center text-white font-black text-xl uppercase tracking-wider shadow-2xl" 
-                        style={{ width: '250px', left: '-55px', top: '55px', padding: '10px 0' }}
+                <div className="absolute top-0 left-0 w-64 h-64 overflow-hidden z-20 pointer-events-none">
+                    <div
+                        className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black uppercase tracking-widest shadow-2xl"
+                        style={{
+                            width: '350px',
+                            left: '-80px',
+                            top: '80px',
+                            padding: '12px 0',
+                            fontSize: '1.75rem',
+                            textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
+                        }}
                     >
                         Vendido
                     </div>
@@ -54,18 +48,6 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
                     <StarIcon className="h-4 w-4" filled={true} />
                     <span className="tracking-wide">DESTACADO</span>
                 </div>
-            )}
-            {!vehicle.is_sold && (
-                 <button
-                    onClick={handleFavoriteClick}
-                    className="absolute top-3 right-3 z-10 p-2 bg-black/40 rounded-full backdrop-blur-sm transition-all duration-300 ease-in-out hover:scale-110 hover:bg-black/60 focus:outline-none"
-                    aria-label={isCurrentlyFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-                >
-                    <HeartIcon
-                        className={`h-6 w-6 transition-all duration-300 ${isCurrentlyFavorite ? 'text-red-500' : 'text-white'}`}
-                        filled={isCurrentlyFavorite}
-                    />
-                </button>
             )}
             <a href={vehicleUrl} className="block aspect-[4/3] overflow-hidden rounded-t-2xl">
                 <div 

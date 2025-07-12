@@ -1,3 +1,4 @@
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
@@ -37,7 +38,7 @@ export default async function handler(
 
     const { error } = await supabaseAdmin
         .from('vehicles')
-        .upsert(vehicles);
+        .upsert(vehicles as Database['public']['Tables']['vehicles']['Update'][]);
 
     if (error) {
         console.error('Error reordering vehicles:', error);

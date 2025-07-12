@@ -53,6 +53,7 @@ const App: React.FC = () => {
             const vehiclesResult = await supabase
                 .from('vehicles')
                 .select('*')
+                .order('display_order', { ascending: true, nullsFirst: false })
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
             

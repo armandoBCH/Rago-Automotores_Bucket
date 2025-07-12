@@ -1,14 +1,16 @@
 
 
+
 import React, { useMemo, useEffect, useRef } from 'react';
 import { Vehicle } from '../types';
 import ImageCarousel from './ImageCarousel';
 import VehicleCard from './VehicleCard';
 import SocialShareButtons from './SocialShareButtons';
 import DescriptionCard from './DescriptionCard';
-import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon } from '../constants';
+import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 import { optimizeUrl, slugify } from '../utils/image';
+import { useFavorites } from './FavoritesProvider';
 
 interface VehicleDetailPageProps {
     vehicle: Vehicle;
@@ -41,40 +43,67 @@ const Breadcrumb: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
     </div>
 );
 
-const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppClick: () => void }> = ({ vehicle, whatsappLink, onWhatsAppClick }) => (
-    <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6 shadow-subtle dark:shadow-subtle-dark">
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-2 border-b dark:border-gray-700 pb-4 mb-6">
-            <h1 className="text-3xl lg:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-                {vehicle.make} {vehicle.model}
-            </h1>
-            <span className="text-xl font-bold inline-block align-baseline py-1 px-4 rounded-full text-rago-burgundy bg-rago-burgundy/10 dark:text-white dark:bg-rago-burgundy">
-                {vehicle.year}
-            </span>
-        </div>
-        <div className="mb-6">
-            <p className="text-[2.1rem] leading-tight sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-rago-burgundy">
-                ${vehicle.price.toLocaleString('es-AR')}
-            </p>
-        </div>
-        {vehicle.is_sold ? (
-            <div className="group w-full flex items-center justify-center gap-3 text-center bg-slate-400 dark:bg-slate-700 text-white font-bold py-4 px-4 rounded-lg text-xl cursor-not-allowed">
-                Vehículo Vendido
+const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppClick: () => void }> = ({ vehicle, whatsappLink, onWhatsAppClick }) => {
+    const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+    const isCurrentlyFavorite = isFavorite(vehicle.id);
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (isCurrentlyFavorite) {
+            removeFavorite(vehicle.id);
+        } else {
+            addFavorite(vehicle.id);
+        }
+    };
+    
+    return (
+        <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6 shadow-subtle dark:shadow-subtle-dark">
+            <div className="flex justify-between items-center gap-x-4 border-b dark:border-gray-700 pb-4 mb-6 flex-wrap">
+                <h1 className="text-3xl lg:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                    {vehicle.make} {vehicle.model}
+                </h1>
+                <div className="flex items-center gap-x-4">
+                    {!vehicle.is_sold && (
+                        <button
+                            onClick={handleFavoriteClick}
+                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full transition-all duration-300 ease-in-out hover:scale-110 hover:bg-red-100 dark:hover:bg-red-900/50 focus:outline-none"
+                            aria-label={isCurrentlyFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+                        >
+                            <HeartIcon
+                                className={`h-7 w-7 transition-all duration-300 ${isCurrentlyFavorite ? 'text-red-500' : 'text-slate-500'}`}
+                                filled={isCurrentlyFavorite}
+                            />
+                        </button>
+                    )}
+                    <span className="text-xl font-bold inline-block align-baseline py-1 px-4 rounded-full text-rago-burgundy bg-rago-burgundy/10 dark:text-white dark:bg-rago-burgundy">
+                        {vehicle.year}
+                    </span>
+                </div>
             </div>
-        ) : (
-            <a
-                href={whatsappLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={onWhatsAppClick}
-                className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
-            >
-                <ChatBubbleIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
-                <span>Contactar por WhatsApp</span>
-            </a>
-        )}
-        <SocialShareButtons vehicle={vehicle} />
-    </div>
-);
+            <div className="mb-6">
+                <p className="text-[2.1rem] leading-tight sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-rago-burgundy">
+                    ${vehicle.price.toLocaleString('es-AR')}
+                </p>
+            </div>
+            {vehicle.is_sold ? (
+                <div className="group w-full flex items-center justify-center gap-3 text-center bg-slate-400 dark:bg-slate-700 text-white font-bold py-4 px-4 rounded-lg text-xl cursor-not-allowed">
+                    Vehículo Vendido
+                </div>
+            ) : (
+                <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={onWhatsAppClick}
+                    className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
+                >
+                    <ChatBubbleIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                    <span>Contactar por WhatsApp</span>
+                </a>
+            )}
+            <SocialShareButtons vehicle={vehicle} />
+        </div>
+    );
+};
 
 const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: string | number }[] }> = ({ specs }) => (
      <section>
@@ -224,9 +253,16 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                                 <ImageCarousel images={vehicle.images} />
                                 {vehicle.is_sold && (
                                     <div className="absolute top-0 left-0 w-64 h-64 overflow-hidden z-20 pointer-events-none">
-                                        <div 
-                                            className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-700 text-center text-white font-black uppercase tracking-widest shadow-2xl" 
-                                            style={{ width: '350px', left: '-80px', top: '80px', padding: '12px 0', fontSize: '2rem' }}
+                                        <div
+                                            className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black uppercase tracking-widest shadow-2xl"
+                                            style={{
+                                                width: '350px',
+                                                left: '-80px',
+                                                top: '80px',
+                                                padding: '12px 0',
+                                                fontSize: '2rem',
+                                                textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
+                                            }}
                                         >
                                             Vendido
                                         </div>

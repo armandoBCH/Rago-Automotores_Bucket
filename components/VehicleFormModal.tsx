@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Vehicle, VehicleFormData } from '../types';
 import { XIcon } from '../constants';
@@ -60,7 +61,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                 localStorage.removeItem(DRAFT_STORAGE_KEY);
                 const standardFuelTypes = ['Nafta', 'Diesel', 'GNC'];
                 const isStandard = standardFuelTypes.includes(initialData.fuelType);
-                const { created_at, id, images, display_order, ...rest } = initialData;
+                const { created_at, id, images, ...rest } = initialData;
                 setFormData({
                     ...rest,
                     year: String(initialData.year),
@@ -116,7 +117,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             images: validImages.length > 0 ? validImages : ['https://i.imgur.com/g2a4A0a.png'],
             is_featured: formData.is_featured,
             is_sold: formData.is_sold,
-            display_order: initialData?.display_order || null,
+            display_order: initialData?.display_order ?? 0,
         };
     }, [formData, imageFiles, initialData, isOtherFuelType]);
 
@@ -308,9 +309,16 @@ const VehicleDetailPreview: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
                 <ImageCarousel images={vehicle.images} />
                 {vehicle.is_sold && (
                     <div className="absolute top-0 left-0 w-64 h-64 overflow-hidden z-20 pointer-events-none">
-                        <div 
-                            className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-700 text-center text-white font-black uppercase tracking-widest shadow-2xl" 
-                            style={{ width: '350px', left: '-80px', top: '80px', padding: '12px 0', fontSize: '2rem' }}
+                        <div
+                            className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black uppercase tracking-widest shadow-2xl"
+                            style={{
+                                width: '350px',
+                                left: '-80px',
+                                top: '80px',
+                                padding: '12px 0',
+                                fontSize: '2rem',
+                                textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
+                            }}
                         >
                             Vendido
                         </div>

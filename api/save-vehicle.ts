@@ -1,6 +1,7 @@
 
 
 
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
@@ -41,7 +42,7 @@ export default async function handler(
         // This is an update
         const { data, error } = await supabaseAdmin
             .from('vehicles')
-            .update(dataToSave)
+            .update(dataToSave as Database['public']['Tables']['vehicles']['Update'])
             .eq('id', id)
             .select()
             .single();
@@ -68,11 +69,11 @@ export default async function handler(
             return max;
         }, -1); // Start with -1 so the first vehicle gets order 0
 
-        dataToSave.display_order = maxOrder + 1;
+        (dataToSave as any).display_order = maxOrder + 1;
 
         const { data, error } = await supabaseAdmin
             .from('vehicles')
-            .insert(dataToSave)
+            .insert(dataToSave as Database['public']['Tables']['vehicles']['Insert'])
             .select()
             .single();
         
