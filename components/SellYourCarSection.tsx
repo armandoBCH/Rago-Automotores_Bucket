@@ -1,5 +1,6 @@
 
 
+
 import React, { useEffect, useRef } from 'react';
 import { CheckIcon, ArrowRightIcon, SellCarIcon, FileCheckIcon, CogIcon, ShieldIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
@@ -69,7 +70,7 @@ const SellYourCarSection: React.FC = () => {
                         ¿Querés vender tu auto?
                     </h2>
                     <p className="mt-4 text-xl md:text-2xl text-slate-200 leading-relaxed max-w-4xl mx-auto">
-                        Te lo compramos directamente o lo gestionamos por vos. Elegí la opción que más te convenga y obtené el mejor valor por tu vehículo, sin complicaciones.
+                        Te lo compramos, lo aceptamos como parte de pago por una nueva unidad, o lo gestionamos por vos. Elegí la opción que más te convenga y obtené el mejor valor por tu vehículo.
                     </p>
                 </div>
                 

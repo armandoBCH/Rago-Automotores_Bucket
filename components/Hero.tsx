@@ -1,6 +1,7 @@
 
+
 import React from 'react';
-import { DownIcon, SearchIcon } from '../constants';
+import { DownIcon, SearchIcon, ArrowUpDownIcon } from '../constants';
 
 interface HeroProps {
     searchTerm: string;
@@ -39,6 +40,13 @@ const Hero: React.FC<HeroProps> = ({ searchTerm, onSearchChange }) => {
                     <p className="mt-4 text-lg md:text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed drop-shadow-sm">
                         Encuentra el auto perfecto para ti. Calidad y confianza en cada kilómetro.
                     </p>
+                </div>
+
+                <div className="mt-6 opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+                    <div className="inline-flex items-center gap-3 px-5 py-3 text-lg font-bold text-white bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-md">
+                        <ArrowUpDownIcon className="h-6 w-6 text-sky-400" />
+                        <span>¡Aceptamos tu usado en parte de pago!</span>
+                    </div>
                 </div>
 
                 <div className="mt-8 max-w-2xl w-full mx-auto opacity-0 animate-fade-in-up" style={{ animationDelay: '300ms' }}>

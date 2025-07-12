@@ -1,6 +1,8 @@
 
 
 
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon } from '../constants';
@@ -239,7 +241,7 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
 };
 
 
-const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
+const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsReset' | 'onToggleAcceptsTradeIn'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [movePopover, setMovePopover] = useState<{ vehicleId: number | null; anchorEl: HTMLElement | null }>({ vehicleId: null, anchorEl: null });
     const [newPositionInput, setNewPositionInput] = useState('');

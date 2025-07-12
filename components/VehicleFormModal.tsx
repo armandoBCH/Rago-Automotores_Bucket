@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Vehicle, VehicleFormData } from '../types';
 import { XIcon } from '../constants';
@@ -22,7 +24,7 @@ type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'create
 const getInitialFormState = (): FormDataState => ({
     make: '', model: '', year: '', price: '', mileage: '', engine: '',
     transmission: 'Manual', fuelType: 'Nafta', vehicle_type: '', customFuelType: '', description: '',
-    is_featured: false, is_sold: false, video_url: ''
+    is_featured: false, is_sold: false, video_url: '',
 });
 
 interface VehicleFormModalProps {
@@ -71,7 +73,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                     vehicle_type: initialData.vehicle_type || '',
                     fuelType: isStandard ? initialData.fuelType : 'Otro',
                     customFuelType: isStandard ? '' : initialData.fuelType,
-                    video_url: initialData.video_url || ''
+                    video_url: initialData.video_url || '',
                 });
                 setImageFiles(images.map(url => ({ id: url, file: null, preview: url, url, status: 'complete' })));
             } else { // Adding a new vehicle
@@ -149,7 +151,6 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             if (name === 'is_sold' && checked) {
                 newState.is_featured = false;
             }
-            // If unmarking as sold, don't automatically re-feature
             return newState;
         });
     };
@@ -341,6 +342,11 @@ const VehicleDetailPreview: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
                 <div className="bg-white dark:bg-gray-900/50 p-4 rounded-lg shadow-sm border dark:border-gray-700">
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b dark:border-gray-700 pb-3 mb-3"><h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{vehicle.make} {vehicle.model}</h1><span className="text-lg font-bold inline-block align-baseline py-1 px-3 rounded-full text-rago-burgundy bg-rago-burgundy/10 dark:text-white dark:bg-rago-burgundy">{vehicle.year}</span></div>
                     <div className="my-3 text-center"><p className="text-4xl font-extrabold text-rago-burgundy break-words">${vehicle.price.toLocaleString('es-AR')}</p></div>
+                    {!vehicle.is_sold && (
+                         <div className="my-3 p-2 text-center rounded-lg bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">
+                            <p className="font-semibold text-base">Acepta permuta</p>
+                        </div>
+                    )}
                     <div className="mt-3 w-full text-center block bg-rago-burgundy text-white font-bold py-3 px-4 rounded-lg text-lg opacity-70 cursor-not-allowed">Contactar por WhatsApp</div>
                 </div>
             </div>

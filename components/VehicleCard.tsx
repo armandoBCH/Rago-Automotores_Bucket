@@ -1,8 +1,10 @@
 
+
+
 import React, { useState } from 'react';
 import { Vehicle } from '../types';
 import { optimizeUrl, slugify } from '../utils/image';
-import { ArrowRightIcon, StarIcon, PlayIcon } from '../constants';
+import { ArrowRightIcon, StarIcon, PlayIcon, ArrowUpDownIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 
 interface VehicleCardProps {
@@ -87,6 +89,12 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPlayVideo }) => {
                     <p className="text-2xl lg:text-3xl font-black text-rago-burgundy">
                         ${vehicle.price.toLocaleString('es-AR')}
                     </p>
+                    {!vehicle.is_sold && (
+                        <div className="mt-2 inline-flex items-center gap-1.5 py-1 px-3 rounded-full text-sm font-bold bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300">
+                            <ArrowUpDownIcon className="h-4 w-4" />
+                            <span>Acepta Permuta</span>
+                        </div>
+                    )}
                 </div>
                 <div className="flex justify-between items-center text-base text-slate-600 dark:text-slate-400">
                     <span>{vehicle.mileage.toLocaleString('es-AR')} km</span>
