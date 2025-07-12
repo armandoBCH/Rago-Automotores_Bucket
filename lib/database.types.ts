@@ -28,14 +28,7 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       vehicles: {
         Row: {
@@ -53,7 +46,7 @@ export type Database = {
           images: string[]
           is_featured: boolean
           is_sold: boolean
-          display_order: number
+          display_order: number | null
         }
         Insert: {
           id?: number
@@ -70,7 +63,7 @@ export type Database = {
           images: string[]
           is_featured?: boolean
           is_sold?: boolean
-          display_order?: number
+          display_order?: number | null
         }
         Update: {
           id?: number
@@ -87,7 +80,7 @@ export type Database = {
           images?: string[]
           is_featured?: boolean
           is_sold?: boolean
-          display_order?: number
+          display_order?: number | null
         }
         Relationships: []
       }

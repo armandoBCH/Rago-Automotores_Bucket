@@ -54,7 +54,7 @@ export default async function handler(
         const { data: maxOrderData, error: maxOrderError } = await supabaseAdmin
             .from('vehicles')
             .select('display_order')
-            .order('display_order', { ascending: false })
+            .order('display_order', { ascending: false, nullsFirst: false })
             .limit(1)
             .single();
 
