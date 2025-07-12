@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useMemo, useEffect, useRef } from 'react';
 import { Vehicle } from '../types';
 import ImageCarousel from './ImageCarousel';
@@ -44,17 +45,6 @@ const Breadcrumb: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
 );
 
 const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppClick: () => void }> = ({ vehicle, whatsappLink, onWhatsAppClick }) => {
-    const { addFavorite, removeFavorite, isFavorite } = useFavorites();
-    const isCurrentlyFavorite = isFavorite(vehicle.id);
-    const handleFavoriteClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        if (isCurrentlyFavorite) {
-            removeFavorite(vehicle.id);
-        } else {
-            addFavorite(vehicle.id);
-        }
-    };
-    
     return (
         <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6 shadow-subtle dark:shadow-subtle-dark">
             <div className="flex justify-between items-center gap-x-4 border-b dark:border-gray-700 pb-4 mb-6 flex-wrap">
@@ -62,18 +52,6 @@ const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppCl
                     {vehicle.make} {vehicle.model}
                 </h1>
                 <div className="flex items-center gap-x-4">
-                    {!vehicle.is_sold && (
-                        <button
-                            onClick={handleFavoriteClick}
-                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full transition-all duration-300 ease-in-out hover:scale-110 hover:bg-red-100 dark:hover:bg-red-900/50 focus:outline-none"
-                            aria-label={isCurrentlyFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-                        >
-                            <HeartIcon
-                                className={`h-7 w-7 transition-all duration-300 ${isCurrentlyFavorite ? 'text-red-500' : 'text-slate-500'}`}
-                                filled={isCurrentlyFavorite}
-                            />
-                        </button>
-                    )}
                     <span className="text-xl font-bold inline-block align-baseline py-1 px-4 rounded-full text-rago-burgundy bg-rago-burgundy/10 dark:text-white dark:bg-rago-burgundy">
                         {vehicle.year}
                     </span>
@@ -123,6 +101,18 @@ const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: st
 
 const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles }) => {
     const similarVehiclesRef = useRef<HTMLDivElement>(null);
+    const { addFavorite, removeFavorite, isFavorite } = useFavorites();
+    const isCurrentlyFavorite = isFavorite(vehicle.id);
+
+    const handleFavoriteClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation(); // Prevent any underlying click events
+        if (isCurrentlyFavorite) {
+            removeFavorite(vehicle.id);
+        } else {
+            addFavorite(vehicle.id);
+        }
+    };
 
     useEffect(() => {
         trackEvent('view_vehicle', vehicle.id);
@@ -251,21 +241,23 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                         <div className="-mx-4 md:-mx-6 lg:mx-0">
                             <div className="relative overflow-hidden lg:rounded-2xl lg:shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
                                 <ImageCarousel images={vehicle.images} />
+                                 {!vehicle.is_sold && (
+                                    <button
+                                        onClick={handleFavoriteClick}
+                                        className="absolute top-4 right-4 z-10 p-3 bg-white/70 dark:bg-black/70 backdrop-blur-sm rounded-full transition-all duration-300 ease-in-out hover:scale-110 hover:bg-red-100 dark:hover:bg-red-900/50 focus:outline-none"
+                                        aria-label={isCurrentlyFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+                                    >
+                                        <HeartIcon
+                                            className={`h-7 w-7 transition-all duration-300 ${isCurrentlyFavorite ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'}`}
+                                            filled={isCurrentlyFavorite}
+                                        />
+                                    </button>
+                                )}
                                 {vehicle.is_sold && (
-                                    <div className="absolute top-0 left-0 w-64 h-64 overflow-hidden z-20 pointer-events-none">
-                                        <div
-                                            className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black uppercase tracking-widest shadow-2xl"
-                                            style={{
-                                                width: '350px',
-                                                left: '-80px',
-                                                top: '80px',
-                                                padding: '12px 0',
-                                                fontSize: '2rem',
-                                                textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
-                                            }}
-                                        >
-                                            Vendido
-                                        </div>
+                                     <div
+                                        className="absolute top-10 -left-16 w-64 transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black text-2xl py-2 z-20 pointer-events-none shadow-lg"
+                                    >
+                                        Vendido
                                     </div>
                                 )}
                             </div>

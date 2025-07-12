@@ -27,20 +27,10 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle }) => {
             className={`relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden flex flex-col transition-all duration-300 ease-out shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-800 ${!vehicle.is_sold && 'hover:shadow-rago-lg dark:hover:shadow-rago-glow dark:hover:border-rago-burgundy/40 hover:-translate-y-1.5'} group`}
         >
              {vehicle.is_sold && (
-                <div className="absolute top-0 left-0 w-64 h-64 overflow-hidden z-20 pointer-events-none">
-                    <div
-                        className="absolute transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black uppercase tracking-widest shadow-2xl"
-                        style={{
-                            width: '350px',
-                            left: '-80px',
-                            top: '80px',
-                            padding: '12px 0',
-                            fontSize: '1.75rem',
-                            textShadow: '1px 1px 3px rgba(0,0,0,0.3)'
-                        }}
-                    >
-                        Vendido
-                    </div>
+                <div
+                    className="absolute top-10 -left-16 w-64 transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black text-2xl py-2 z-20 pointer-events-none shadow-lg"
+                >
+                    Vendido
                 </div>
             )}
             {vehicle.is_featured && !vehicle.is_sold && (

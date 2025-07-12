@@ -1,9 +1,9 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon as WhatsAppIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon } from '../constants';
+import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
-import VehicleStatsModal from './VehicleStatsModal';
 
 interface AdminPanelProps {
     vehicles: Vehicle[];
@@ -18,103 +18,110 @@ interface AdminPanelProps {
     onReorder: (reorderedVehicles: Vehicle[]) => void;
 }
 
-const StatCard: React.FC<{ title: string, value: string | number, icon: React.ReactNode }> = ({ title, value, icon }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center gap-5">
-        <div className="bg-rago-burgundy/10 text-rago-burgundy dark:bg-rago-burgundy/20 dark:text-rago-burgundy p-3 rounded-full">
+const TabButton: React.FC<{ name: string; icon: React.ReactNode; isActive: boolean; onClick: () => void }> = ({ name, icon, isActive, onClick }) => (
+    <button
+        onClick={onClick}
+        className={`flex items-center gap-3 whitespace-nowrap py-4 px-2 border-b-2 font-semibold text-lg transition-colors focus:outline-none ${
+            isActive
+                ? 'border-rago-burgundy text-rago-burgundy'
+                : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
+        }`}
+    >
+        {icon}
+        {name}
+    </button>
+);
+
+const RankingCard: React.FC<{ title: string; icon: React.ReactNode; data: { vehicle: Vehicle; count: number }[]; metricIcon: React.ReactNode; }> = ({ title, icon, data, metricIcon }) => (
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 h-full">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-3">
             {icon}
-        </div>
-        <div>
-            <p className="text-base text-slate-500 dark:text-slate-400">{title}</p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">{value}</p>
+            {title}
+        </h3>
+        {data && data.length > 0 ? (
+            <ul className="space-y-4">
+                {data.map(({ vehicle, count }) => (
+                    <li key={vehicle.id} className="flex items-center justify-between gap-3 text-sm">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <img src={optimizeUrl(vehicle.images[0], { w: 48, h: 36, fit: 'cover' })} alt={vehicle.model} className="w-12 h-9 object-cover rounded-md flex-shrink-0 bg-slate-200 dark:bg-slate-700" />
+                            <div className="min-w-0">
+                                <p className="font-semibold text-slate-700 dark:text-slate-200 truncate">{vehicle.make} {vehicle.model}</p>
+                                <p className="text-slate-500 dark:text-slate-400">{vehicle.year}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 font-bold text-slate-600 dark:text-slate-300 flex-shrink-0">
+                            {metricIcon}
+                            <span>{count}</span>
+                        </div>
+                    </li>
+                ))}
+            </ul>
+        ) : (
+            <div className="flex items-center justify-center h-4/5">
+                <p className="text-slate-500 dark:text-slate-400 text-center py-8">No hay datos.</p>
+            </div>
+        )}
+    </div>
+);
+
+const InteractionCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-5">
+            <div className="bg-rago-burgundy/10 text-rago-burgundy p-4 rounded-lg">
+                {icon}
+            </div>
+            <div>
+                <p className="text-4xl font-bold text-slate-900 dark:text-white">{value}</p>
+                <p className="text-base text-slate-500 dark:text-slate-400 mt-1">{title}</p>
+            </div>
         </div>
     </div>
 );
 
-export const AdminPanel: React.FC<AdminPanelProps> = ({
-    vehicles,
-    allEvents,
-    onAdd,
-    onEdit,
-    onDelete,
-    onLogout,
-    onAnalyticsReset,
-    onToggleFeatured,
-    onToggleSold,
-    onReorder,
-}) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState<'all' | 'active' | 'sold' | 'featured'>('all');
-    const [statsModalVehicle, setStatsModalVehicle] = useState<Vehicle | null>(null);
+
+const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, allEvents, onAnalyticsReset }) => {
     const [resetAnalyticsModal, setResetAnalyticsModal] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
 
-    const filteredVehicles = useMemo(() => {
-        let tempVehicles = [...vehicles];
-        if (filter === 'active') tempVehicles = tempVehicles.filter(v => !v.is_sold);
-        if (filter === 'sold') tempVehicles = tempVehicles.filter(v => v.is_sold);
-        if (filter === 'featured') tempVehicles = tempVehicles.filter(v => v.is_featured);
+    const rankingData = useMemo(() => {
+        const views = new Map<number, number>();
+        const contacts = new Map<number, number>();
+        const shares = new Map<number, number>();
 
-        const lowercasedTerm = searchTerm.toLowerCase().trim();
-        if (lowercasedTerm) {
-            return tempVehicles.filter(v => 
-                `${v.make} ${v.model} ${v.year}`.toLowerCase().includes(lowercasedTerm)
-            );
-        }
-        return tempVehicles;
-    }, [vehicles, filter, searchTerm]);
-
-    const [orderedVehicles, setOrderedVehicles] = useState(filteredVehicles);
-    const dragItem = useRef<number | null>(null);
-    const dragOverItem = useRef<number | null>(null);
-
-    useEffect(() => {
-        setOrderedVehicles(filteredVehicles);
-    }, [filteredVehicles]);
-
-    const isReorderEnabled = filter === 'all' && searchTerm === '';
-
-    const handleDragStart = (position: number) => {
-        dragItem.current = position;
-    };
-    
-    const handleDragEnter = (position: number) => {
-        if (dragItem.current === null) return;
-
-        const newOrderedVehicles = [...orderedVehicles];
-        const draggedItemContent = newOrderedVehicles.splice(dragItem.current, 1)[0];
-        newOrderedVehicles.splice(position, 0, draggedItemContent);
-        dragItem.current = position;
-        setOrderedVehicles(newOrderedVehicles);
-    };
-
-    const handleDragEnd = () => {
-        if (dragItem.current !== null) {
-            onReorder(orderedVehicles);
-        }
-        dragItem.current = null;
-        dragOverItem.current = null;
-    };
-
-    const performanceData = useMemo(() => {
-        const data = new Map<number, { views: number, contactRate: string }>();
-        vehicles.forEach(vehicle => {
-            const vehicleEvents = allEvents.filter(e => e.vehicle_id === vehicle.id);
-            const views = vehicleEvents.filter(e => e.event_type === 'view_vehicle').length;
-            const contacts = vehicleEvents.filter(e => e.event_type === 'click_whatsapp').length;
-            const contactRate = views > 0 ? ((contacts / views) * 100).toFixed(1) + '%' : '0.0%';
-            data.set(vehicle.id, { views, contactRate });
+        allEvents.forEach(event => {
+            if (event.vehicle_id) {
+                if (event.event_type === 'view_vehicle') {
+                    views.set(event.vehicle_id, (views.get(event.vehicle_id) || 0) + 1);
+                } else if (event.event_type === 'click_whatsapp') {
+                    contacts.set(event.vehicle_id, (contacts.get(event.vehicle_id) || 0) + 1);
+                } else if (event.event_type === 'click_share') {
+                    shares.set(event.vehicle_id, (shares.get(event.vehicle_id) || 0) + 1);
+                }
+            }
         });
-        return data;
-    }, [vehicles, allEvents]);
 
-    const stats = useMemo(() => {
-        const totalViews = allEvents.filter(e => e.event_type === 'view_vehicle').length;
-        const totalContacts = allEvents.filter(e => e.event_type === 'click_whatsapp').length;
-        const totalShares = allEvents.filter(e => e.event_type === 'click_share').length;
-        const activeVehicles = vehicles.filter(v => !v.is_sold).length;
-        const featuredVehicles = vehicles.filter(v => v.is_featured).length;
-        return { totalViews, totalContacts, totalShares, activeVehicles, featuredVehicles };
+        const getTop5 = (map: Map<number, number>): { vehicle: Vehicle; count: number }[] => {
+            return Array.from(map.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([id, count]) => ({ vehicle: vehicles.find(v => v.id === id)!, count }))
+                .filter(item => item.vehicle);
+        };
+        
+        return {
+            mostViewed: getTop5(views),
+            mostContacted: getTop5(contacts),
+            mostShared: getTop5(shares),
+        };
     }, [allEvents, vehicles]);
+
+    const keyInteractions = useMemo(() => {
+        const sellCarViews = allEvents.filter(e => e.event_type === 'view_sell_your_car').length;
+        const sellCarInterest = allEvents.filter(e => e.event_type === 'click_whatsapp_sell').length;
+        const generalContacts = allEvents.filter(e => e.event_type === 'click_whatsapp_general').length;
+
+        return { sellCarViews, sellCarInterest, generalContacts };
+    }, [allEvents]);
 
     const handleResetAnalytics = async () => {
         const password = prompt("Para confirmar, por favor ingrese la contraseña de administrador:");
@@ -140,146 +147,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     };
     
     return (
-        <div className="space-y-8 text-slate-800 dark:text-slate-200">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Panel de Administración</h1>
-                    <p className="text-lg text-slate-500 dark:text-slate-400">Gestiona vehículos y visualiza el rendimiento.</p>
-                </div>
-                <button
-                    onClick={onLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-base font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-400/50 transition-all"
-                >
-                    <LogoutIcon className="h-5 w-5" />
-                    Cerrar Sesión
-                </button>
-            </div>
-            
+        <div className="space-y-10 animate-fade-in">
             <div>
-                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Estadísticas Globales</h2>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatCard title="Vehículos Activos" value={stats.activeVehicles} icon={<CircleDollarSignIcon className="h-7 w-7"/>} />
-                    <StatCard title="Total de Vistas" value={stats.totalViews.toLocaleString()} icon={<EyeIcon className="h-7 w-7"/>} />
-                    <StatCard title="Total de Contactos" value={stats.totalContacts.toLocaleString()} icon={<WhatsAppIcon className="h-7 w-7"/>} />
-                    <StatCard title="Total de Destacados" value={stats.featuredVehicles} icon={<StarIcon className="h-7 w-7"/>} />
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Rankings</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <RankingCard title="Más Vistos" icon={<EyeIcon className="h-6 w-6" />} data={rankingData.mostViewed} metricIcon={<EyeIcon className="w-4 h-4 text-slate-400" />} />
+                    <RankingCard title="Más Contactados" icon={<ChatBubbleIcon className="h-6 w-6" />} data={rankingData.mostContacted} metricIcon={<ChatBubbleIcon className="w-4 h-4 text-slate-400" />} />
+                    <RankingCard title="Más Compartidos" icon={<ShareIcon className="h-6 w-6" />} data={rankingData.mostShared} metricIcon={<ShareIcon className="w-4 h-4 text-slate-400" />} />
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900/50 p-6 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800/50">
-                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5">
-                     <div>
-                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Listado de Vehículos</h2>
-                        <p className="text-slate-500 dark:text-slate-400">Total: {vehicles.length} vehículos.</p>
-                     </div>
-                    <button
-                        onClick={onAdd}
-                        className="flex items-center gap-2 px-5 py-3 text-base font-semibold text-white bg-rago-burgundy rounded-lg hover:bg-rago-burgundy-darker focus:outline-none focus:ring-4 focus:ring-rago-burgundy/50 transition-all transform hover:-translate-y-px"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                        Añadir Vehículo
-                    </button>
+            <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Clave</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <InteractionCard title="Vistas 'Vender mi Auto'" value={keyInteractions.sellCarViews} icon={<CircleDollarSignIcon className="h-8 w-8" />} />
+                    <InteractionCard title="Interés en Vender" value={keyInteractions.sellCarInterest} icon={<FileCheckIcon className="h-8 w-8" />} />
+                    <InteractionCard title="Contactos Generales" value={keyInteractions.generalContacts} icon={<ChatBubbleIcon className="h-8 w-8" />} />
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                     <div className="relative flex-grow">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <SearchIcon className="h-5 w-5 text-slate-400" />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Buscar por marca, modelo..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 text-base bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-rago-burgundy focus:border-transparent transition"
-                        />
-                    </div>
-                     <select
-                        value={filter}
-                        onChange={e => setFilter(e.target.value as any)}
-                        className="w-full sm:w-auto px-4 py-2 text-base bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-rago-burgundy focus:border-transparent transition appearance-none bg-no-repeat"
-                        style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
-                    >
-                        <option value="all">Todos</option>
-                        <option value="active">Activos</option>
-                        <option value="featured">Destacados</option>
-                        <option value="sold">Vendidos</option>
-                    </select>
-                </div>
-                {!isReorderEnabled && (
-                    <div className="mb-4 p-3 text-sm text-center bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-500/50">
-                        El reordenamiento manual está deshabilitado mientras se usan filtros o la búsqueda.
-                    </div>
-                )}
-                 <div className="overflow-x-auto">
-                    <table className="w-full text-base text-left text-slate-600 dark:text-slate-300">
-                        <thead className="text-sm text-slate-700 uppercase bg-slate-100 dark:bg-slate-800 dark:text-slate-400">
-                            <tr>
-                                <th scope="col" className="p-4 w-12 text-center" title="Reordenar">#</th>
-                                <th scope="col" className="p-4">Vehículo</th>
-                                <th scope="col" className="p-4 text-center">Vistas</th>
-                                <th scope="col" className="p-4 text-center">Tasa Contacto</th>
-                                <th scope="col" className="p-4 text-center">Destacado</th>
-                                <th scope="col" className="p-4 text-center">Vendido</th>
-                                <th scope="col" className="p-4 text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orderedVehicles.map((vehicle, index) => {
-                                const perf = performanceData.get(vehicle.id);
-                                return (
-                                <tr 
-                                    key={vehicle.id} 
-                                    className={`border-b dark:border-slate-700 ${vehicle.is_sold ? 'bg-slate-100 dark:bg-slate-800/30 opacity-60' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'} ${isReorderEnabled ? 'cursor-grab' : ''}`}
-                                    draggable={isReorderEnabled}
-                                    onDragStart={() => handleDragStart(index)}
-                                    onDragEnter={() => handleDragEnter(index)}
-                                    onDragEnd={handleDragEnd}
-                                    onDragOver={(e) => e.preventDefault()}
-                                >
-                                    <td className="p-4 text-slate-400 text-center">
-                                        {isReorderEnabled ? <GripVerticalIcon className="inline-block" /> : <span>{index + 1}</span>}
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-4">
-                                            <img src={optimizeUrl(vehicle.images[0], { w: 80, h: 60, fit: 'cover' })} alt={`${vehicle.make} ${vehicle.model}`} className="w-20 h-15 object-cover rounded-md flex-shrink-0 bg-slate-200 dark:bg-slate-700"/>
-                                            <div>
-                                                <p className="font-bold text-slate-800 dark:text-white">{vehicle.make} {vehicle.model}</p>
-                                                <p className="text-sm text-slate-500">{vehicle.year} &middot; ${vehicle.price.toLocaleString('es-AR')}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 font-semibold text-center">{perf?.views ?? 0}</td>
-                                    <td className="p-4 font-semibold text-center">{perf?.contactRate ?? '0.0%'}</td>
-                                    <td className="p-4 text-center">
-                                         <button onClick={() => onToggleFeatured(vehicle.id, vehicle.is_featured)} disabled={vehicle.is_sold} className="disabled:opacity-30 disabled:cursor-not-allowed">
-                                            <StarIcon className={`h-6 w-6 transition-colors ${vehicle.is_featured ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`} filled={vehicle.is_featured} />
-                                         </button>
-                                    </td>
-                                    <td className="p-4 text-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={vehicle.is_sold}
-                                            onChange={() => onToggleSold(vehicle.id, vehicle.is_sold)}
-                                            className="h-5 w-5 rounded border-gray-300 text-rago-burgundy focus:ring-rago-burgundy-darker dark:bg-gray-700 dark:border-gray-600"
-                                        />
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button onClick={() => setStatsModalVehicle(vehicle)} className="p-2 text-slate-500 hover:text-sky-500 dark:hover:text-sky-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Ver Estadísticas"><EyeIcon /></button>
-                                            <button onClick={() => onEdit(vehicle)} className="p-2 text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Editar"><EditIcon /></button>
-                                            <button onClick={() => onDelete(vehicle.id)} className="p-2 text-slate-500 hover:text-red-500 dark:hover:text-red-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Eliminar"><TrashIcon /></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )})}
-                        </tbody>
-                    </table>
-                 </div>
             </div>
              
-             {/* Danger Zone */}
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 p-6 rounded-2xl">
                 <h3 className="text-xl font-bold text-red-800 dark:text-red-300">Zona de Peligro</h3>
-                <p className="mt-1 text-red-600 dark:text-red-400">Estas acciones son irreversibles. Proceda con precaución.</p>
+                <p className="mt-1 text-red-600 dark:text-red-400">Esta acción es irreversible. Proceda con precaución.</p>
                 <div className="mt-4">
                     <button
                         onClick={() => setResetAnalyticsModal(true)}
@@ -290,14 +179,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 </div>
             </div>
 
-            {statsModalVehicle && (
-                <VehicleStatsModal 
-                    vehicle={statsModalVehicle} 
-                    allEvents={allEvents} 
-                    onClose={() => setStatsModalVehicle(null)} 
-                />
-            )}
-            
             {resetAnalyticsModal && (
                 <ConfirmationModal
                     isOpen={true}
@@ -308,6 +189,176 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     isConfirming={isResetting}
                 />
             )}
+        </div>
+    );
+};
+
+
+const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    const filteredVehicles = useMemo(() => {
+        const lowercasedTerm = searchTerm.toLowerCase().trim();
+        if (lowercasedTerm) {
+            return vehicles.filter(v => 
+                `${v.make} ${v.model} ${v.year}`.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+        return vehicles;
+    }, [vehicles, searchTerm]);
+
+    const [orderedVehicles, setOrderedVehicles] = useState(filteredVehicles);
+    const dragItem = useRef<number | null>(null);
+
+    useEffect(() => {
+        setOrderedVehicles(filteredVehicles);
+    }, [filteredVehicles]);
+
+    const isReorderEnabled = searchTerm === '';
+
+    const handleDragStart = (position: number) => dragItem.current = position;
+    
+    const handleDragEnter = (position: number) => {
+        if (dragItem.current === null) return;
+        const newOrderedVehicles = [...orderedVehicles];
+        const draggedItemContent = newOrderedVehicles.splice(dragItem.current, 1)[0];
+        newOrderedVehicles.splice(position, 0, draggedItemContent);
+        dragItem.current = position;
+        setOrderedVehicles(newOrderedVehicles);
+    };
+
+    const handleDragEnd = () => {
+        if (dragItem.current !== null) onReorder(orderedVehicles);
+        dragItem.current = null;
+    };
+
+    return (
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fade-in">
+             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Inventario</h2>
+                 <div className="flex items-center gap-4 w-full md:w-auto flex-col sm:flex-row">
+                     <div className="relative w-full sm:w-64">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <SearchIcon className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Buscar..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 text-base bg-slate-100 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-rago-burgundy focus:border-transparent transition"
+                        />
+                    </div>
+                    <button
+                        onClick={onAdd}
+                        className="flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 text-base font-semibold text-white bg-rago-burgundy rounded-lg hover:bg-rago-burgundy-darker focus:outline-none focus:ring-4 focus:ring-rago-burgundy/50 transition-all transform hover:-translate-y-px"
+                    >
+                        <PlusIcon className="h-5 w-5" />
+                        Añadir
+                    </button>
+                </div>
+            </div>
+            {!isReorderEnabled && (
+                <div className="mb-4 p-3 text-sm text-center bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-500/50">
+                    El reordenamiento manual está deshabilitado mientras se usa la búsqueda.
+                </div>
+            )}
+            <div className="overflow-x-auto">
+                <table className="w-full text-base text-left text-slate-600 dark:text-slate-300">
+                    <thead className="text-sm text-slate-700 uppercase bg-slate-100 dark:bg-slate-700/50 dark:text-slate-400">
+                        <tr>
+                            <th scope="col" className="p-4 w-12" title="Reordenar"></th>
+                            <th scope="col" className="p-4">Vehículo</th>
+                            <th scope="col" className="p-4 text-center">Estado</th>
+                            <th scope="col" className="p-4">Precio</th>
+                            <th scope="col" className="p-4 text-center">Destacado</th>
+                            <th scope="col" className="p-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {orderedVehicles.map((vehicle, index) => (
+                            <tr 
+                                key={vehicle.id} 
+                                className={`border-b dark:border-slate-700/50 ${vehicle.is_sold ? 'opacity-60' : 'hover:bg-slate-50 dark:hover:bg-slate-800/20'} ${isReorderEnabled ? 'cursor-grab' : ''}`}
+                                draggable={isReorderEnabled}
+                                onDragStart={() => handleDragStart(index)}
+                                onDragEnter={() => handleDragEnter(index)}
+                                onDragEnd={handleDragEnd}
+                                onDragOver={(e) => e.preventDefault()}
+                            >
+                                <td className="p-4 text-slate-400 text-center">
+                                    {isReorderEnabled ? <GripVerticalIcon className="inline-block" /> : <span>{index + 1}</span>}
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex items-center gap-4">
+                                        <img src={optimizeUrl(vehicle.images[0], { w: 96, h: 72, fit: 'cover' })} alt={`${vehicle.make} ${vehicle.model}`} className="w-24 h-16 object-cover rounded-md flex-shrink-0 bg-slate-200 dark:bg-slate-700"/>
+                                        <div>
+                                            <p className="font-bold text-slate-800 dark:text-white">{vehicle.make} {vehicle.model}</p>
+                                            <p className="text-sm text-slate-500">{vehicle.year}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="p-4 text-center">
+                                    <span className={`px-3 py-1 text-sm font-semibold rounded-full ${vehicle.is_sold ? 'bg-slate-200 text-slate-600 dark:bg-slate-600 dark:text-slate-200' : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'}`}>
+                                      {vehicle.is_sold ? 'Vendido' : 'Disponible'}
+                                    </span>
+                                </td>
+                                <td className="p-4 font-semibold text-lg text-slate-700 dark:text-slate-200">${vehicle.price.toLocaleString('es-AR')}</td>
+                                <td className="p-4 text-center">
+                                     <button onClick={() => onToggleFeatured(vehicle.id, vehicle.is_featured)} disabled={vehicle.is_sold} className="disabled:opacity-30 disabled:cursor-not-allowed">
+                                        <StarIcon className={`h-6 w-6 transition-colors ${vehicle.is_featured ? 'text-amber-400' : 'text-slate-400 hover:text-amber-400'}`} filled={vehicle.is_featured} />
+                                     </button>
+                                </td>
+                                <td className="p-4 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button onClick={() => onToggleSold(vehicle.id, vehicle.is_sold)} className="p-2 text-slate-500 hover:text-green-500 dark:hover:text-green-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" title={vehicle.is_sold ? 'Marcar como disponible' : 'Marcar como vendido'}><CircleDollarSignIcon /></button>
+                                        <button onClick={() => onEdit(vehicle)} className="p-2 text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" title="Editar"><EditIcon /></button>
+                                        <button onClick={() => onDelete(vehicle.id)} className="p-2 text-slate-500 hover:text-red-500 dark:hover:text-red-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" title="Eliminar"><TrashIcon /></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                        {orderedVehicles.length === 0 && (
+                            <tr><td colSpan={6} className="text-center py-12 text-slate-500">No se encontraron vehículos.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+             </div>
+        </div>
+    );
+};
+
+
+export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
+    const [activeTab, setActiveTab] = useState<'inventory' | 'stats'>('inventory');
+
+    return (
+        <div className="bg-slate-100 dark:bg-slate-900/50 p-4 sm:p-6 lg:p-8 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800/50 min-h-[85vh]">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                <div>
+                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Panel de Administración</h1>
+                    <p className="text-lg text-slate-500 dark:text-slate-400 mt-1">Gestioná tu inventario y analizá las estadísticas.</p>
+                </div>
+                <button
+                    onClick={props.onLogout}
+                    className="flex items-center gap-2 px-4 py-2 text-base font-semibold text-white bg-rago-burgundy rounded-lg hover:bg-rago-burgundy-darker focus:outline-none focus:ring-4 focus:ring-rago-burgundy/50 transition-all flex-shrink-0"
+                >
+                    <LogoutIcon className="h-5 w-5" />
+                    Cerrar Sesión
+                </button>
+            </div>
+            
+            <div className="border-b border-slate-200 dark:border-slate-700">
+                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                    <TabButton name="Inventario" icon={<FileCheckIcon className="h-6 w-6"/>} isActive={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} />
+                    <TabButton name="Estadísticas" icon={<StatsIcon className="h-6 w-6"/>} isActive={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
+                </nav>
+            </div>
+            
+            <div className="mt-8">
+                {activeTab === 'inventory' && <InventoryView {...props} />}
+                {activeTab === 'stats' && <StatsView {...props} />}
+            </div>
         </div>
     );
 };
