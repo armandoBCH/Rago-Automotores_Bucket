@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Vehicle } from '../types';
 import { WhatsAppIcon, FacebookIcon, ShareIcon } from '../constants';
@@ -33,7 +34,7 @@ const SocialShareButtons: React.FC<SocialShareButtonsProps> = ({ vehicle }) => {
     ];
 
     const handleShareClick = () => {
-        trackEvent('click_share', vehicle.id);
+        trackEvent('click_share_vehicle', vehicle.id);
     };
 
     const handleNativeShare = async () => {

@@ -1,5 +1,7 @@
 
+
 import React, { createContext, useState, useEffect, useCallback, ReactNode, useContext } from 'react';
+import { trackEvent } from '../lib/analytics';
 
 interface FavoritesContextType {
     favoriteIds: number[];
@@ -35,11 +37,19 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
     }, [favoriteIds]);
 
     const addFavorite = useCallback((id: number) => {
-        setFavoriteIds(prev => [...prev, id]);
+        setFavoriteIds(prev => {
+            if (prev.includes(id)) return prev;
+            trackEvent('favorite_add', id);
+            return [...prev, id];
+        });
     }, []);
 
     const removeFavorite = useCallback((id: number) => {
-        setFavoriteIds(prev => prev.filter(favId => favId !== id));
+        setFavoriteIds(prev => {
+            if (!prev.includes(id)) return prev;
+            trackEvent('favorite_remove', id);
+            return prev.filter(favId => favId !== id);
+        });
     }, []);
 
     const isFavorite = useCallback((id: number) => {

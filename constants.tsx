@@ -228,6 +228,12 @@ export const EyeIcon = ({ className }: { className?: string }) => (
     </svg>
 );
 
+export const MessageSquareIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+);
+
 export const StatsIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
         <path d="M3 3v18h18"/>
@@ -247,7 +253,7 @@ export const TargetIcon = ({ className }: { className?: string }) => (
 
 export const StarIcon = ({ className, filled }: { className?: string, filled?: boolean }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill={filled ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.31h5.404a.563.563 0 01.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.528 5.345a.562.562 0 01-.82.622l-4.402-2.963a.563.563 0 00-.63 0l-4.402 2.963a.562.562 0 01-.82-.622l1.528-5.345a.563.563 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988h5.404a.563.563 0 00.475-.31l2.125-5.111z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.31h5.404a.563.563 0 01.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.528 5.345a.562.562 0 01-.82.622l-4.402-2.963a.563.563 0 00-.63 0l-4.402-2.963a.562.562 0 01-.82-.622l1.528-5.345a.563.563 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988h5.404a.563.563 0 00.475-.31l2.125-5.111z" />
     </svg>
 );
 
@@ -279,5 +285,12 @@ export const ShareIcon = ({ className }: { className?: string }) => (
       <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
       <polyline points="16 6 12 2 8 6" />
       <line x1="12" y1="2" x2="12" y2="15" />
+    </svg>
+);
+
+export const MousePointerClickIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
+        <path d="M13 13l6 6"></path>
     </svg>
 );

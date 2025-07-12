@@ -1,8 +1,9 @@
 
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon } from '../constants';
+import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
 import VehiclePerformanceTable from './VehiclePerformanceTable';
@@ -48,18 +49,108 @@ const InteractionCard: React.FC<{ title: string; value: string | number; icon: R
     </div>
 );
 
+const KeyMetricCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-5">
+            <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-700/50 text-rago-burgundy p-4 rounded-xl">
+                {icon}
+            </div>
+            <div>
+                <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{value}</p>
+                <p className="text-base font-medium text-slate-500 dark:text-slate-400 mt-1">{title}</p>
+            </div>
+        </div>
+    </div>
+);
+
+const RankItem: React.FC<{ vehicle: Vehicle; value: number | string; index: number; }> = ({ vehicle, value, index }) => (
+    <li className="flex items-center justify-between gap-4 py-3 border-b border-slate-200 dark:border-slate-700 last:border-0">
+        <div className="flex items-center gap-4 min-w-0">
+            <span className={`text-xl font-bold w-6 text-center ${index < 3 ? 'text-rago-burgundy' : 'text-slate-400'}`}>{index + 1}</span>
+            <img src={optimizeUrl(vehicle.images[0], { w: 48, h: 36, fit: 'cover' })} alt={vehicle.model} className="w-12 h-9 object-cover rounded-md flex-shrink-0 bg-slate-200 dark:bg-slate-700" />
+            <div className="min-w-0">
+                <p className="font-semibold text-slate-800 dark:text-white truncate">{vehicle.make} {vehicle.model}</p>
+                <p className="text-sm text-slate-500">{vehicle.year}</p>
+            </div>
+        </div>
+        <span className="text-lg font-bold text-slate-900 dark:text-white flex-shrink-0">{value}</span>
+    </li>
+);
+
+const RankingList: React.FC<{ title: string; data: { vehicle: Vehicle; value: number }[]; icon: React.ReactNode; }> = ({ title, data, icon }) => (
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3 mb-4">
+            <span className="text-rago-burgundy">{icon}</span>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h3>
+        </div>
+        {data.length > 0 ? (
+            <ul className="space-y-1">
+                {data.map((item, index) => <RankItem key={item.vehicle.id} vehicle={item.vehicle} value={item.value} index={index} />)}
+            </ul>
+        ) : (
+            <p className="text-center py-8 text-slate-500">No hay datos.</p>
+        )}
+    </div>
+);
 
 const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, allEvents, onAnalyticsReset }) => {
     const [resetAnalyticsModal, setResetAnalyticsModal] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
 
-    const keyInteractions = useMemo(() => {
-        const sellCarViews = allEvents.filter(e => e.event_type === 'view_sell_your_car').length;
-        const sellCarInterest = allEvents.filter(e => e.event_type === 'click_whatsapp_sell').length;
-        const generalContacts = allEvents.filter(e => e.event_type === 'click_whatsapp_general').length;
+    const { performanceData, kpis, rankings, keyInteractions } = useMemo(() => {
+        const vehicleMap = new Map(vehicles.map(v => [v.id, v]));
+        const performanceMap = new Map<number, { views: number; contacts: number; shares: number; favorites: number; cardClicks: number }>();
 
-        return { sellCarViews, sellCarInterest, generalContacts };
-    }, [allEvents]);
+        vehicles.forEach(v => {
+            performanceMap.set(v.id, { views: 0, contacts: 0, shares: 0, favorites: 0, cardClicks: 0 });
+        });
+
+        allEvents.forEach(event => {
+            if (event.vehicle_id && performanceMap.has(event.vehicle_id)) {
+                const stats = performanceMap.get(event.vehicle_id)!;
+                switch (event.event_type) {
+                    case 'view_vehicle_detail': stats.views++; break;
+                    case 'click_whatsapp_vehicle': stats.contacts++; break;
+                    case 'click_share_vehicle': stats.shares++; break;
+                    case 'favorite_add': stats.favorites++; break;
+                    case 'click_card_details': stats.cardClicks++; break;
+                }
+            }
+        });
+
+        const fullPerformanceData = Array.from(performanceMap.entries()).map(([id, stats]) => {
+            const vehicle = vehicleMap.get(id)!;
+            return {
+                vehicle,
+                ...stats,
+                contactRate: stats.views > 0 ? (stats.contacts / stats.views) * 100 : 0,
+                ctr: stats.cardClicks > 0 ? (stats.views / stats.cardClicks) * 100 : 0 // Simplified CTR
+            };
+        });
+
+        const siteKpis = {
+            totalDetailViews: fullPerformanceData.reduce((acc, p) => acc + p.views, 0),
+            totalCardClicks: fullPerformanceData.reduce((acc, p) => acc + p.cardClicks, 0),
+            totalContacts: fullPerformanceData.reduce((acc, p) => acc + p.contacts, 0),
+            totalFavorites: fullPerformanceData.reduce((acc, p) => acc + p.favorites, 0),
+        };
+        
+        const siteRankings = {
+            mostViewed: [...fullPerformanceData].sort((a,b) => b.views - a.views).slice(0, 5).map(p => ({ vehicle: p.vehicle, value: p.views })),
+            mostContacted: [...fullPerformanceData].sort((a,b) => b.contacts - a.contacts).slice(0, 5).map(p => ({ vehicle: p.vehicle, value: p.contacts })),
+            mostFavorited: [...fullPerformanceData].sort((a,b) => b.favorites - a.favorites).slice(0, 5).map(p => ({ vehicle: p.vehicle, value: p.favorites })),
+        };
+        
+        const siteInteractions = {
+            sellCarViews: allEvents.filter(e => e.event_type === 'view_sell_your_car').length,
+            sellCarInterest: allEvents.filter(e => e.event_type === 'click_whatsapp_sell').length,
+            generalContacts: allEvents.filter(e => e.event_type === 'click_whatsapp_general').length,
+        };
+
+        return { performanceData: fullPerformanceData, kpis: siteKpis, rankings: siteRankings, keyInteractions: siteInteractions };
+
+    }, [vehicles, allEvents]);
+
 
     const handleResetAnalytics = async () => {
         const password = prompt("Para confirmar, por favor ingrese la contraseña de administrador:");
@@ -86,7 +177,30 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
     
     return (
         <div className="space-y-10 animate-fade-in">
-            <VehiclePerformanceTable vehicles={vehicles} events={allEvents} />
+            {/* KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <KeyMetricCard title="Vistas a Detalles" value={kpis.totalDetailViews} icon={<EyeIcon className="h-8 w-8" />} />
+                <KeyMetricCard title="Clics a Detalles" value={kpis.totalCardClicks} icon={<MousePointerClickIcon className="h-8 w-8" />} />
+                <KeyMetricCard title="Contactos WhatsApp" value={kpis.totalContacts} icon={<MessageSquareIcon className="h-8 w-8" />} />
+                <KeyMetricCard title="Guardados en Favoritos" value={kpis.totalFavorites} icon={<HeartIcon className="h-8 w-8" />} />
+            </div>
+
+            {/* Rankings */}
+            <div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Rankings de Vehículos</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <RankingList title="Más Vistos" data={rankings.mostViewed} icon={<EyeIcon className="h-6 w-6"/>} />
+                    <RankingList title="Más Contactados" data={rankings.mostContacted} icon={<MessageSquareIcon className="h-6 w-6"/>} />
+                    <RankingList title="Más Guardados" data={rankings.mostFavorited} icon={<HeartIcon className="h-6 w-6"/>} />
+                </div>
+            </div>
+            
+            {/* Full Performance Table */}
+            <div>
+                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Rendimiento Detallado</h2>
+                 <VehiclePerformanceTable performanceData={performanceData} />
+            </div>
+
 
             <div>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Generales</h2>

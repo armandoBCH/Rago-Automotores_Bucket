@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useMemo, useEffect, useRef } from 'react';
 import { Vehicle } from '../types';
 import ImageCarousel from './ImageCarousel';
@@ -115,7 +116,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
     };
 
     useEffect(() => {
-        trackEvent('view_vehicle', vehicle.id);
+        trackEvent('view_vehicle_detail', vehicle.id);
         
         // Add Vehicle JSON-LD structured data
         const schema = {
@@ -173,7 +174,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
     }, [vehicle]);
 
     const handleWhatsAppClick = () => {
-        trackEvent('click_whatsapp', vehicle.id);
+        trackEvent('click_whatsapp_vehicle', vehicle.id);
     };
 
     const contactMessage = `Hola, estoy interesado en el ${vehicle.make} ${vehicle.model}.`;
