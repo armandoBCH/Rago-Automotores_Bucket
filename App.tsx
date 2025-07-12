@@ -1,12 +1,7 @@
 
-
-
-
-
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
-import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon } from './constants';
+import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
 import { optimizeUrl } from './utils/image';
@@ -23,7 +18,8 @@ import LoginPage from './components/LoginPage';
 import SellYourCarSection from './components/SellYourCarSection';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import FeaturedVehiclesSection from './components/FeaturedVehiclesSection';
-import FavoritesSection from './components/FavoritesSection';
+import FavoritesPage from './components/FavoritesPage';
+import { useFavorites } from './components/FavoritesProvider';
 
 type ModalState = 
     | { type: 'none' }
@@ -42,6 +38,9 @@ const App: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [visibleCount, setVisibleCount] = useState(8);
+    
+    const { favoriteIds } = useFavorites();
+    const favoritesCount = favoriteIds.length;
     
     const [path, setPath] = useState(() => {
         const currentAdminState = sessionStorage.getItem('rago-admin') === 'true';
@@ -175,6 +174,7 @@ const App: React.FC = () => {
     const vehicleIdStr = slug ? slug.split('-').pop() ?? null : null;
     const vehicleId = vehicleIdStr ? parseInt(vehicleIdStr, 10) : null;
     const isHomePage = pathname === '/' || pathname === '/index.html';
+    const isFavoritesPage = pathname === '/favoritos';
     
     const selectedVehicle = useMemo(() => {
         if (!vehicleId || isNaN(vehicleId)) return null;
@@ -239,9 +239,13 @@ const App: React.FC = () => {
             updateMeta('meta[name="twitter:title"]', title);
             updateMeta('meta[name="twitter:description"]', description);
             updateMeta('meta[name="twitter:image"]', imageUrl);
+        } else if (isFavoritesPage) {
+            document.title = 'Mis Favoritos | Rago Automotores';
+            updateMeta('meta[name="description"]', 'Vea sus vehículos guardados en Rago Automotores. Su selección personal de autos de calidad.');
+            updateMeta('meta[property="og:title"]', 'Mis Vehículos Favoritos');
         }
         
-    }, [path, selectedVehicle, isHomePage]);
+    }, [path, selectedVehicle, isHomePage, isFavoritesPage]);
 
     const uniqueBrands = useMemo(() => Array.from(new Set(vehicles.map(v => v.make))).sort(), [vehicles]);
     const uniqueVehicleTypes = useMemo(() => Array.from(new Set(vehicles.map(v => v.vehicle_type))).sort(), [vehicles]);
@@ -413,6 +417,7 @@ const App: React.FC = () => {
         if (loading) return <div className="text-center py-16">Cargando...</div>;
         if (dbError) return <div className="text-center py-16 text-red-500">{dbError}</div>;
         if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} /> : <NotFoundPage />;
+        if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} />;
         if (isHomePage) return (
             <>
                 <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />
@@ -451,6 +456,19 @@ const App: React.FC = () => {
                     <li><a href="/" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><HomeIcon className="h-7 w-7 text-rago-burgundy" /><span>Inicio</span></a></li>
                     <li><a href="/#catalog" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><CatalogIcon className="h-7 w-7 text-rago-burgundy" /><span>Catálogo</span></a></li>
                     <li><a href="/#featured-vehicles" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><StarIcon className="h-7 w-7 text-rago-burgundy" /><span>Destacados</span></a></li>
+                    <li>
+                        <a href="/favoritos" className="flex items-center justify-between gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors">
+                            <div className="flex items-center gap-4">
+                                <HeartIcon className="h-7 w-7 text-rago-burgundy" />
+                                <span>Favoritos</span>
+                            </div>
+                            {favoritesCount > 0 && (
+                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rago-burgundy text-white text-base font-bold">
+                                    {favoritesCount}
+                                </span>
+                            )}
+                        </a>
+                    </li>
                     <li><a href="/#sell-car-section" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><SellCarIcon className="h-7 w-7 text-rago-burgundy" /><span>Vender mi Auto</span></a></li>
                 </ul>
                 <div className="mt-auto pt-8 border-t border-slate-700/50">
@@ -464,7 +482,6 @@ const App: React.FC = () => {
                 {isMobileMenuOpen && <div role="button" aria-label="Cerrar menú" className="absolute inset-0 z-50" onClick={() => setIsMobileMenuOpen(false)}></div>}
                 <Header />
                 {isHomePage && <Hero searchTerm={searchTerm} onSearchChange={setSearchTerm} />}
-                {isHomePage && <FavoritesSection allVehicles={vehicles} />}
                 {isHomePage && <FeaturedVehiclesSection vehicles={vehicles} />}
                 <main id="catalog" className="container mx-auto px-4 md:px-6 py-8 flex-grow">
                      <div key={path} className="animate-fade-in">{renderPublicContent()}</div>

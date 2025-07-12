@@ -1,6 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { ChatBubbleIcon, InstagramIcon, StarIcon, SellCarIcon } from '../constants';
+import { ChatBubbleIcon, InstagramIcon, SellCarIcon, HeartIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
+import { useFavorites } from './FavoritesProvider';
 
 const NavLink: React.FC<{ href: string; children: React.ReactNode; }> = ({ href, children }) => (
     <a
@@ -16,6 +18,8 @@ const Header: React.FC = () => {
     const [isVisible, setIsVisible] = useState(true);
     const [isScrolled, setIsScrolled] = useState(false);
     const lastScrollY = useRef(0);
+    const { favoriteIds } = useFavorites();
+    const favoritesCount = favoriteIds.length;
 
     // Scroll detection for header visibility and style
     useEffect(() => {
@@ -80,6 +84,14 @@ const Header: React.FC = () => {
                         <span className="hidden lg:inline">Contactar</span>
                     </a>
                      <div className="w-px h-6 bg-slate-300 dark:bg-slate-700"></div>
+                     <a href="/favoritos" aria-label={`Ver ${favoritesCount} vehículos favoritos`} className="relative text-slate-500 dark:text-slate-400 hover:text-rago-burgundy dark:hover:text-white transition-transform duration-300 hover:scale-110">
+                        <HeartIcon className="h-7 w-7" />
+                        {favoritesCount > 0 && (
+                            <span className="absolute -top-1.5 -right-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-rago-burgundy text-white text-[11px] font-bold border-2 border-white/70 dark:border-rago-black/70">
+                                {favoritesCount}
+                            </span>
+                        )}
+                    </a>
                      <a href={instagramUrl} onClick={() => trackEvent('click_instagram')} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="text-slate-500 dark:text-slate-400 hover:text-rago-burgundy dark:hover:text-white transition-transform duration-300 hover:scale-110">
                         <InstagramIcon className="h-7 w-7" />
                     </a>
