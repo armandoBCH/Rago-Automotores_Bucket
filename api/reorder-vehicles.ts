@@ -38,7 +38,9 @@ export default async function handler(
 
     const { error } = await supabaseAdmin
         .from('vehicles')
-        .upsert(vehicles as Database['public']['Tables']['vehicles']['Update'][]);
+        .upsert(vehicles as Database['public']['Tables']['vehicles']['Update'][], {
+            defaultToNull: false, // This is the fix. It prevents setting other columns to NULL.
+        });
 
     if (error) {
         console.error('Error reordering vehicles:', error);
