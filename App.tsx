@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
 import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon } from './constants';
@@ -205,7 +206,8 @@ const App: React.FC = () => {
             updateMeta('meta[name="description"]', 'Encontrá tu próximo vehículo en Rago Automotores. Ofrecemos un catálogo de autos usados seleccionados en Olavarría. Calidad, confianza y la mejor financiación.');
             updateMeta('meta[property="og:title"]', 'Rago Automotores - Catálogo de Vehículos');
             updateMeta('meta[property="og:description"]', 'Tu concesionaria de confianza para vehículos seleccionados. Calidad y transparencia en cada venta.');
-            updateMeta('meta[property="og:image"]', 'https://i.imgur.com/zOGb0ay.jpeg');
+            const ogImageUrl = optimizeUrl('https://res.cloudinary.com/dbq5jp6jn/image/upload/v1752339636/WhatsApp_Image_2025-07-12_at_13.57.13_1_va1jyr.webp', { w: 1200, h: 630, fit: 'cover', q: 80, output: 'jpeg' });
+            updateMeta('meta[property="og:image"]', ogImageUrl);
 
             // Add Organization JSON-LD for homepage
             const orgSchema = {
@@ -224,7 +226,7 @@ const App: React.FC = () => {
                 },
                 'telephone': '+5492284635692',
                 'openingHours': 'Mo-Fr 09:00-17:00, Sa 09:00-13:30',
-                 'image': 'https://i.imgur.com/zOGb0ay.jpeg'
+                 'image': ogImageUrl
             };
             const script = document.createElement('script');
             script.type = 'application/ld+json';

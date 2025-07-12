@@ -24,8 +24,8 @@ const Hero: React.FC<HeroProps> = ({ searchTerm, onSearchChange }) => {
             {/* Background Image and Overlay */}
             <div className="absolute inset-0 z-0">
                 <img 
-                    src="https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
-                    alt="Vehículo de lujo en un entorno moderno" 
+                    src="https://res.cloudinary.com/dbq5jp6jn/image/upload/v1752339636/WhatsApp_Image_2025-07-12_at_13.57.13_1_va1jyr.webp" 
+                    alt="Frente de la concesionaria Rago Automotores" 
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-rago-black/80 via-rago-burgundy-darker/40 to-black/30 bg-[size:200%_200%] animate-bg-pan"></div>
