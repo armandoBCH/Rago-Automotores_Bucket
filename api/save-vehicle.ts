@@ -1,7 +1,6 @@
 
 
 
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
@@ -51,20 +50,25 @@ export default async function handler(
         result = data;
     } else {
         // This is a create, so we need to set the display_order
-        const { data: maxOrderData, error: maxOrderError } = await supabaseAdmin
+        // Robustly find the max display_order without a failing .order() call
+        const { data: allOrders, error: ordersError } = await supabaseAdmin
             .from('vehicles')
-            .select('display_order')
-            .order('display_order', { ascending: false, nullsFirst: false })
-            .limit(1)
-            .single();
-
-        // PGRST116 means no rows found, which is okay for the first vehicle.
-        if (maxOrderError && maxOrderError.code !== 'PGRST116') {
-            throw maxOrderError;
+            .select('display_order');
+        
+        if (ordersError) {
+            console.error("Error fetching display_orders:", ordersError);
+            throw ordersError;
         }
 
-        const newOrder = (maxOrderData?.display_order ?? -1) + 1;
-        dataToSave.display_order = newOrder;
+        const maxOrder = (allOrders || []).reduce((max, v) => {
+            // Ensure v.display_order is a number and greater than current max
+            if (v && typeof v.display_order === 'number' && v.display_order > max) {
+                return v.display_order;
+            }
+            return max;
+        }, -1); // Start with -1 so the first vehicle gets order 0
+
+        dataToSave.display_order = maxOrder + 1;
 
         const { data, error } = await supabaseAdmin
             .from('vehicles')
