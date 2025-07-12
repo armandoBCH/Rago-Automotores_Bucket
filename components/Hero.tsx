@@ -43,8 +43,8 @@ const Hero: React.FC<HeroProps> = ({ searchTerm, onSearchChange }) => {
                 </div>
 
                 <div className="mt-6 opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                    <div className="inline-flex items-center gap-3 px-5 py-3 text-lg font-bold text-white bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-md">
-                        <ArrowUpDownIcon className="h-6 w-6 text-sky-400" />
+                    <div className="inline-flex items-center gap-2 sm:gap-3 px-4 py-2 sm:px-5 sm:py-3 text-base sm:text-lg font-bold text-white bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-md whitespace-nowrap">
+                        <ArrowUpDownIcon className="h-5 w-5 sm:h-6 sm:w-6 text-sky-400" />
                         <span>¡Aceptamos tu usado en parte de pago!</span>
                     </div>
                 </div>

@@ -63,6 +63,7 @@ const Header: React.FC = () => {
                     <NavLink href="/">Inicio</NavLink>
                     <NavLink href="/#catalog">Catálogo</NavLink>
                     <NavLink href="/#featured-vehicles">Destacados</NavLink>
+                    <NavLink href="/#about-us-section">Sobre Nosotros</NavLink>
                 </nav>
 
                 {/* Right: Actions and Social */}

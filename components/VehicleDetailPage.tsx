@@ -64,7 +64,7 @@ const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppCl
             </div>
             {!vehicle.is_sold && (
                 <div className="mb-6 -mt-2 p-3 text-center rounded-xl bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 border border-sky-200 dark:border-sky-700/50">
-                    <p className="font-bold text-lg flex items-center justify-center gap-2">
+                    <p className="font-bold text-base sm:text-lg flex items-center justify-center gap-2 whitespace-nowrap">
                         <ArrowUpDownIcon className="h-5 w-5" />
                         <span>¡Aceptamos tu usado en parte de pago!</span>
                     </p>

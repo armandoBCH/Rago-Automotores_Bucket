@@ -3,9 +3,10 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
-import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon } from './constants';
+import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, UsersIcon } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
 import { optimizeUrl } from './utils/image';
@@ -25,6 +26,7 @@ import FeaturedVehiclesSection from './components/FeaturedVehiclesSection';
 import FavoritesPage from './components/FavoritesPage';
 import { useFavorites } from './components/FavoritesProvider';
 import VerticalVideoPlayer from './components/VerticalVideoPlayer';
+import AboutUsSection from './components/AboutUsSection';
 
 type ModalState = 
     | { type: 'none' }
@@ -478,6 +480,7 @@ const App: React.FC = () => {
                         </a>
                     </li>
                     <li><a href="/#sell-car-section" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><SellCarIcon className="h-7 w-7 text-rago-burgundy" /><span>Vender mi Auto</span></a></li>
+                    <li><a href="/#about-us-section" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><UsersIcon className="h-7 w-7 text-rago-burgundy" /><span>Sobre Nosotros</span></a></li>
                 </ul>
                 <div className="mt-auto pt-8 border-t border-slate-700/50">
                     <div className="flex justify-center gap-x-8">
@@ -495,6 +498,7 @@ const App: React.FC = () => {
                      <div key={path} className="animate-fade-in">{renderPublicContent()}</div>
                 </main>
                 {isHomePage && <SellYourCarSection />}
+                {isHomePage && <AboutUsSection />}
                 <Footer />
             </div>
             {isHomePage && <ScrollToTopButton />}
