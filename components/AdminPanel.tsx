@@ -1,9 +1,11 @@
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon } from '../constants';
+import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
+import VehiclePerformanceTable from './VehiclePerformanceTable';
 
 interface AdminPanelProps {
     vehicles: Vehicle[];
@@ -32,38 +34,6 @@ const TabButton: React.FC<{ name: string; icon: React.ReactNode; isActive: boole
     </button>
 );
 
-const RankingCard: React.FC<{ title: string; icon: React.ReactNode; data: { vehicle: Vehicle; count: number }[]; metricIcon: React.ReactNode; }> = ({ title, icon, data, metricIcon }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 h-full">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-3">
-            {icon}
-            {title}
-        </h3>
-        {data && data.length > 0 ? (
-            <ul className="space-y-4">
-                {data.map(({ vehicle, count }) => (
-                    <li key={vehicle.id} className="flex items-center justify-between gap-3 text-sm">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <img src={optimizeUrl(vehicle.images[0], { w: 48, h: 36, fit: 'cover' })} alt={vehicle.model} className="w-12 h-9 object-cover rounded-md flex-shrink-0 bg-slate-200 dark:bg-slate-700" />
-                            <div className="min-w-0">
-                                <p className="font-semibold text-slate-700 dark:text-slate-200 truncate">{vehicle.make} {vehicle.model}</p>
-                                <p className="text-slate-500 dark:text-slate-400">{vehicle.year}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 font-bold text-slate-600 dark:text-slate-300 flex-shrink-0">
-                            {metricIcon}
-                            <span>{count}</span>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-        ) : (
-            <div className="flex items-center justify-center h-4/5">
-                <p className="text-slate-500 dark:text-slate-400 text-center py-8">No hay datos.</p>
-            </div>
-        )}
-    </div>
-);
-
 const InteractionCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-5">
@@ -82,38 +52,6 @@ const InteractionCard: React.FC<{ title: string; value: string | number; icon: R
 const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, allEvents, onAnalyticsReset }) => {
     const [resetAnalyticsModal, setResetAnalyticsModal] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
-
-    const rankingData = useMemo(() => {
-        const views = new Map<number, number>();
-        const contacts = new Map<number, number>();
-        const shares = new Map<number, number>();
-
-        allEvents.forEach(event => {
-            if (event.vehicle_id) {
-                if (event.event_type === 'view_vehicle') {
-                    views.set(event.vehicle_id, (views.get(event.vehicle_id) || 0) + 1);
-                } else if (event.event_type === 'click_whatsapp') {
-                    contacts.set(event.vehicle_id, (contacts.get(event.vehicle_id) || 0) + 1);
-                } else if (event.event_type === 'click_share') {
-                    shares.set(event.vehicle_id, (shares.get(event.vehicle_id) || 0) + 1);
-                }
-            }
-        });
-
-        const getTop5 = (map: Map<number, number>): { vehicle: Vehicle; count: number }[] => {
-            return Array.from(map.entries())
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 5)
-                .map(([id, count]) => ({ vehicle: vehicles.find(v => v.id === id)!, count }))
-                .filter(item => item.vehicle);
-        };
-        
-        return {
-            mostViewed: getTop5(views),
-            mostContacted: getTop5(contacts),
-            mostShared: getTop5(shares),
-        };
-    }, [allEvents, vehicles]);
 
     const keyInteractions = useMemo(() => {
         const sellCarViews = allEvents.filter(e => e.event_type === 'view_sell_your_car').length;
@@ -148,17 +86,10 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
     
     return (
         <div className="space-y-10 animate-fade-in">
-            <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Rankings</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <RankingCard title="Más Vistos" icon={<EyeIcon className="h-6 w-6" />} data={rankingData.mostViewed} metricIcon={<EyeIcon className="w-4 h-4 text-slate-400" />} />
-                    <RankingCard title="Más Contactados" icon={<ChatBubbleIcon className="h-6 w-6" />} data={rankingData.mostContacted} metricIcon={<ChatBubbleIcon className="w-4 h-4 text-slate-400" />} />
-                    <RankingCard title="Más Compartidos" icon={<ShareIcon className="h-6 w-6" />} data={rankingData.mostShared} metricIcon={<ShareIcon className="w-4 h-4 text-slate-400" />} />
-                </div>
-            </div>
+            <VehiclePerformanceTable vehicles={vehicles} events={allEvents} />
 
             <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Clave</h2>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Generales</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <InteractionCard title="Vistas 'Vender mi Auto'" value={keyInteractions.sellCarViews} icon={<CircleDollarSignIcon className="h-8 w-8" />} />
                     <InteractionCard title="Interés en Vender" value={keyInteractions.sellCarInterest} icon={<FileCheckIcon className="h-8 w-8" />} />
@@ -196,6 +127,9 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
 
 const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [movePopover, setMovePopover] = useState<{ vehicleId: number | null; anchorEl: HTMLElement | null }>({ vehicleId: null, anchorEl: null });
+    const [newPositionInput, setNewPositionInput] = useState('');
+    const popoverRef = useRef<HTMLDivElement>(null);
     
     const filteredVehicles = useMemo(() => {
         const lowercasedTerm = searchTerm.toLowerCase().trim();
@@ -213,6 +147,20 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsRe
     useEffect(() => {
         setOrderedVehicles(filteredVehicles);
     }, [filteredVehicles]);
+    
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+                if (movePopover.anchorEl && !movePopover.anchorEl.contains(event.target as Node)) {
+                    setMovePopover({ vehicleId: null, anchorEl: null });
+                }
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [movePopover.anchorEl]);
 
     const isReorderEnabled = searchTerm === '';
 
@@ -232,8 +180,42 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsRe
         dragItem.current = null;
     };
 
+    const handleMoveVehicle = () => {
+        if (!movePopover.vehicleId) return;
+
+        const position = parseInt(newPositionInput, 10);
+        if (isNaN(position) || position < 1 || position > orderedVehicles.length) {
+            alert(`Por favor, ingrese un número entre 1 y ${orderedVehicles.length}.`);
+            return;
+        }
+
+        const targetIndex = position - 1;
+        const currentIndex = orderedVehicles.findIndex(v => v.id === movePopover.vehicleId);
+
+        if (currentIndex === -1 || currentIndex === targetIndex) {
+            setMovePopover({ vehicleId: null, anchorEl: null });
+            return;
+        }
+
+        const newOrderedVehicles = [...orderedVehicles];
+        const [movedItem] = newOrderedVehicles.splice(currentIndex, 1);
+        newOrderedVehicles.splice(targetIndex, 0, movedItem);
+
+        onReorder(newOrderedVehicles);
+        setMovePopover({ vehicleId: null, anchorEl: null });
+    };
+
+    const popoverPosition = useMemo(() => {
+        if (!movePopover.anchorEl) return null;
+        const rect = movePopover.anchorEl.getBoundingClientRect();
+        return {
+            top: rect.bottom + window.scrollY + 8,
+            left: rect.left + window.scrollX + rect.width / 2,
+        };
+    }, [movePopover.anchorEl]);
+
     return (
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fade-in">
+        <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fade-in">
              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Inventario</h2>
                  <div className="flex items-center gap-4 w-full md:w-auto flex-col sm:flex-row">
@@ -310,8 +292,24 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsRe
                                      </button>
                                 </td>
                                 <td className="p-4 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button onClick={() => onToggleSold(vehicle.id, vehicle.is_sold)} className="p-2 text-slate-500 hover:text-green-500 dark:hover:text-green-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" title={vehicle.is_sold ? 'Marcar como disponible' : 'Marcar como vendido'}><CircleDollarSignIcon /></button>
+                                    <div className="flex items-center justify-end gap-1">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (movePopover.vehicleId === vehicle.id) {
+                                                    setMovePopover({ vehicleId: null, anchorEl: null });
+                                                } else {
+                                                    setMovePopover({ vehicleId: vehicle.id, anchorEl: e.currentTarget });
+                                                    setNewPositionInput(String(index + 1));
+                                                }
+                                            }}
+                                            disabled={!isReorderEnabled}
+                                            className="p-2 text-slate-500 hover:text-purple-500 dark:hover:text-purple-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                                            title="Mover a posición"
+                                        >
+                                            <ArrowUpDownIcon className="h-5 w-5"/>
+                                        </button>
+                                        <button onClick={() => onToggleSold(vehicle.id, vehicle.is_sold)} className="p-2 text-slate-500 hover:text-green-500 dark:hover:text-green-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" title={vehicle.is_sold ? 'Marcar como disponible' : 'Marcar como vendido'}><CircleDollarSignIcon className="h-5 w-5"/></button>
                                         <button onClick={() => onEdit(vehicle)} className="p-2 text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" title="Editar"><EditIcon /></button>
                                         <button onClick={() => onDelete(vehicle.id)} className="p-2 text-slate-500 hover:text-red-500 dark:hover:text-red-400 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors" title="Eliminar"><TrashIcon /></button>
                                     </div>
@@ -324,6 +322,43 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsRe
                     </tbody>
                 </table>
              </div>
+             {movePopover.anchorEl && popoverPosition && (
+                 <div
+                    ref={popoverRef}
+                    className="absolute z-20 w-64 bg-white dark:bg-slate-900 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 p-4 animate-fade-in"
+                    style={{
+                        top: `${popoverPosition.top}px`,
+                        left: `${popoverPosition.left}px`,
+                        transform: 'translateX(-50%)',
+                    }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    <p className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-100">Mover a la posición</p>
+                    <div className="flex gap-2">
+                        <input
+                            type="number"
+                            value={newPositionInput}
+                            onChange={e => setNewPositionInput(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                    handleMoveVehicle();
+                                    e.preventDefault();
+                                }
+                            }}
+                            min="1"
+                            max={orderedVehicles.length}
+                            className="w-full px-2 py-1 text-base bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-rago-burgundy focus:border-transparent transition"
+                            autoFocus
+                        />
+                        <button
+                            onClick={handleMoveVehicle}
+                            className="px-4 py-1 text-sm font-semibold text-white bg-rago-burgundy rounded-md hover:bg-rago-burgundy-darker"
+                        >
+                            Mover
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
