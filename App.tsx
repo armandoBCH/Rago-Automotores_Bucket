@@ -38,7 +38,7 @@ const App: React.FC = () => {
     const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('rago-admin') === 'true');
     const [modalState, setModalState] = useState<ModalState>({ type: 'none' });
     const [searchTerm, setSearchTerm] = useState('');
-    const [filters, setFilters] = useState({ make: '', year: '', price: '' });
+    const [filters, setFilters] = useState({ make: '', year: '', price: '', vehicleType: '' });
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [visibleCount, setVisibleCount] = useState(8);
@@ -56,7 +56,7 @@ const App: React.FC = () => {
             // Fetch vehicles always, now sorted by the new custom order field
             const vehiclesResult = await supabase
                 .from('vehicles')
-                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,description,images,is_featured,is_sold,display_order')
+                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,vehicle_type,description,images,is_featured,is_sold,display_order')
                 .order('display_order', { ascending: true, nullsFirst: false })
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
@@ -244,12 +244,14 @@ const App: React.FC = () => {
     }, [path, selectedVehicle, isHomePage]);
 
     const uniqueBrands = useMemo(() => Array.from(new Set(vehicles.map(v => v.make))).sort(), [vehicles]);
+    const uniqueVehicleTypes = useMemo(() => Array.from(new Set(vehicles.map(v => v.vehicle_type))).sort(), [vehicles]);
 
     const filteredVehicles = useMemo(() => {
         let temp = [...vehicles];
         const term = searchTerm.toLowerCase().trim();
         if (term) temp = temp.filter(v => `${v.make} ${v.model} ${v.year}`.toLowerCase().includes(term));
         if (filters.make) temp = temp.filter(v => v.make === filters.make);
+        if (filters.vehicleType) temp = temp.filter(v => v.vehicle_type === filters.vehicleType);
         if (filters.year) temp = temp.filter(v => v.year >= parseInt(filters.year, 10));
         if (filters.price) temp = temp.filter(v => v.price <= parseInt(filters.price, 10));
         return temp;
@@ -266,7 +268,7 @@ const App: React.FC = () => {
         setVisibleCount(filteredVehicles.length);
     };
 
-    const handleFilterChange = useCallback((newFilters: { make: string, year: string, price: string }) => setFilters(newFilters), []);
+    const handleFilterChange = useCallback((newFilters: { make: string; year: string; price: string; vehicleType: string; }) => setFilters(newFilters), []);
     const handleAddVehicleClick = () => setModalState({ type: 'form' });
     const handleEditVehicleClick = (vehicle: Vehicle) => setModalState({ type: 'form', vehicle });
     const handleDeleteVehicleClick = (vehicleId: number) => setModalState({ type: 'confirmDelete', vehicleId });
@@ -401,7 +403,7 @@ const App: React.FC = () => {
                         onReorder={handleReorder}
                     />
                 </main>
-                {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} />}
+                {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />}
                 {modalState.type === 'confirmDelete' && <ConfirmationModal isOpen={true} onClose={handleCloseModal} onConfirm={confirmDelete} title="Confirmar Eliminación" message="¿Estás seguro de que quieres eliminar este vehículo? Esta acción no se puede deshacer." isConfirming={isDeleting} />}
             </div>
         );
@@ -413,7 +415,7 @@ const App: React.FC = () => {
         if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} /> : <NotFoundPage />;
         if (isHomePage) return (
             <>
-                <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} />
+                <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />
                 <VehicleList vehicles={vehiclesToShow} />
                 {hasMoreVehicles && (
                      <div className="text-center mt-12 animate-fade-in">

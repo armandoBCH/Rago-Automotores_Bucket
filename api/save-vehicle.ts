@@ -68,6 +68,10 @@ export default async function handler(
         }, -1); // Start with -1 so the first vehicle gets order 0
 
         dataToSave.display_order = maxOrder + 1;
+        
+        if (!dataToSave.vehicle_type) {
+            dataToSave.vehicle_type = 'N/A';
+        }
 
         const { data, error } = await supabaseAdmin
             .from('vehicles')

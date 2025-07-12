@@ -1,5 +1,6 @@
 
 
+
 import { Vehicle } from './types';
 
 export const SearchIcon = ({ className }: { className?: string }) => (
@@ -82,6 +83,17 @@ export const ShieldIcon = ({ className }: { className?: string }) => (
         <circle cx="7" cy="17" r="2"/>
         <path d="M9 17h6"/>
         <circle cx="17" cy="17" r="2"/>
+    </svg>
+);
+
+export const CarIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M14 16.94V19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h1.34"/>
+        <path d="M18.34 12H19a2 2 0 0 1 2 2v5c0 1.1-.9 2-2 2h-1"/>
+        <path d="m4 12 5-7.5c.57-.86 1.63-1.5 2.87-1.5h1.26c1.24 0 2.3.64 2.87 1.5L20 12"/>
+        <path d="M4.5 17H20"/>
+        <circle cx="6.5" cy="17" r="2.5"/>
+        <circle cx="17.5" cy="17" r="2.5"/>
     </svg>
 );
 
@@ -253,7 +265,7 @@ export const TargetIcon = ({ className }: { className?: string }) => (
 
 export const StarIcon = ({ className, filled }: { className?: string, filled?: boolean }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill={filled ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.31h5.404a.563.563 0 01.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.528 5.345a.562.562 0 01-.82.622l-4.402-2.963a.563.563 0 00-.63 0l-4.402-2.963a.562.562 0 01-.82-.622l1.528-5.345a.563.563 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988h5.404a.563.563 0 00.475-.31l2.125-5.111z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2 L15.09 8.26 L22 9.27 L17 14.14 L18.18 21.02 L12 17.77 L5.82 21.02 L7 14.14 L2 9.27 L8.91 8.26 Z" />
     </svg>
 );
 

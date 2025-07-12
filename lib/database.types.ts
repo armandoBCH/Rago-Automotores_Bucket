@@ -50,6 +50,7 @@ export type Database = {
           engine: string
           transmission: 'Automática' | 'Manual'
           fuelType: string
+          vehicle_type: string
           description: string
           images: string[]
           is_featured: boolean
@@ -67,6 +68,7 @@ export type Database = {
           engine: string
           transmission: 'Automática' | 'Manual'
           fuelType: string
+          vehicle_type: string
           description: string
           images: string[]
           is_featured?: boolean
@@ -84,6 +86,7 @@ export type Database = {
           engine?: string
           transmission?: 'Automática' | 'Manual'
           fuelType?: string
+          vehicle_type?: string
           description?: string
           images?: string[]
           is_featured?: boolean

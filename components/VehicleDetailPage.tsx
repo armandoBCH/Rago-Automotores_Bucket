@@ -3,13 +3,14 @@
 
 
 
+
 import React, { useMemo, useEffect, useRef } from 'react';
 import { Vehicle } from '../types';
 import ImageCarousel from './ImageCarousel';
 import VehicleCard from './VehicleCard';
 import SocialShareButtons from './SocialShareButtons';
 import DescriptionCard from './DescriptionCard';
-import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon } from '../constants';
+import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon, CarIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 import { optimizeUrl, slugify } from '../utils/image';
 import { useFavorites } from './FavoritesProvider';
@@ -131,6 +132,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                 'name': vehicle.make
             },
             'model': vehicle.model,
+            'vehicleCategory': vehicle.vehicle_type,
             'vehicleModelDate': String(vehicle.year),
             'mileageFromOdometer': {
                 '@type': 'QuantitativeValue',
@@ -183,6 +185,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
     const specs = [
         { icon: <ShieldIcon className="h-6 w-6"/>, label: "Marca", value: vehicle.make },
         { icon: <TagIcon className="h-6 w-6"/>, label: "Modelo", value: vehicle.model },
+        { icon: <CarIcon className="h-6 w-6"/>, label: "Tipo", value: vehicle.vehicle_type },
         { icon: <CalendarIcon className="h-6 w-6"/>, label: "Año", value: vehicle.year },
         { icon: <GaugeIcon className="h-6 w-6"/>, label: "Kilometraje", value: `${vehicle.mileage.toLocaleString('es-AR')} km` },
         { icon: <CogIcon className="h-6 w-6"/>, label: "Motor", value: vehicle.engine },
