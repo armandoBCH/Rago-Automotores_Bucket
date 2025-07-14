@@ -10,6 +10,7 @@ interface FilterBarProps {
     onFilterChange: (filters: FilterBarProps['filters']) => void;
     brands: string[];
     uniqueVehicleTypes: string[];
+    className?: string;
 }
 
 const FilterInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label: string }> = ({ label, ...props }) => (
@@ -21,7 +22,7 @@ const FilterInput: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { labe
     </div>
 );
 
-const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, brands, uniqueVehicleTypes }) => {
+const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, brands, uniqueVehicleTypes, className }) => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -39,7 +40,7 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, onFilterChange, brands, 
     };
 
     return (
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-md p-5 md:p-6 rounded-xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-800 mb-8">
+        <div className={`bg-white/80 dark:bg-slate-900/50 backdrop-blur-md p-5 md:p-6 rounded-xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-800 mb-8 ${className || ''}`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                 <div>
                     <label htmlFor="make" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">

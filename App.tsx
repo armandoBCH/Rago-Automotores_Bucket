@@ -1,7 +1,9 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
-import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon } from './constants';
+import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, SlidersIcon, XIcon } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
 import { optimizeUrl } from './utils/image';
@@ -37,6 +39,7 @@ const App: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({ make: '', year: '', price: '', vehicleType: '' });
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [visibleCount, setVisibleCount] = useState(8);
     const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
@@ -169,9 +172,9 @@ const App: React.FC = () => {
     }, [path]);
 
     useEffect(() => {
-        document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
+        document.body.style.overflow = isMobileMenuOpen || isFilterPanelOpen ? 'hidden' : '';
         return () => { document.body.style.overflow = ''; };
-    }, [isMobileMenuOpen]);
+    }, [isMobileMenuOpen, isFilterPanelOpen]);
 
     const handleLoginSuccess = () => {
         sessionStorage.setItem('rago-admin', 'true');
@@ -449,7 +452,22 @@ const App: React.FC = () => {
         if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl}/>;
         if (isHomePage) return (
             <>
-                <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />
+                {/* Desktop Filter Bar */}
+                <div className="hidden md:block">
+                    <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />
+                </div>
+                
+                {/* Mobile Filter Button */}
+                <div className="md:hidden mb-6">
+                    <button
+                        onClick={() => setIsFilterPanelOpen(true)}
+                        className="w-full flex items-center justify-center gap-2.5 px-6 py-3 text-base font-bold text-white bg-rago-burgundy rounded-lg hover:bg-rago-burgundy-darker focus:outline-none focus:ring-4 focus:ring-rago-burgundy/50 transition-all duration-300 shadow-md"
+                    >
+                        <SlidersIcon className="h-5 w-5" />
+                        <span>Filtrar Vehículos</span>
+                    </button>
+                </div>
+
                 <VehicleList vehicles={vehiclesToShow} onPlayVideo={setPlayingVideoUrl} />
                 {hasMoreVehicles && (
                      <div className="text-center mt-12 animate-fade-in">
@@ -520,6 +538,42 @@ const App: React.FC = () => {
                 <Footer />
             </div>
             {isHomePage && <ScrollToTopButton />}
+
+            {/* Mobile Filter Panel */}
+            {isFilterPanelOpen && createPortal(
+                <div
+                    className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ease-out animate-fade-in"
+                    onClick={() => setIsFilterPanelOpen(false)}
+                    aria-modal="true"
+                    role="dialog"
+                >
+                    <div
+                        className="fixed bottom-0 left-0 right-0 bg-slate-100 dark:bg-slate-950 rounded-t-2xl shadow-2xl transition-transform duration-300 ease-out animate-fade-in-up"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold">Filtros</h2>
+                                <button onClick={() => setIsFilterPanelOpen(false)} className="p-2 -mr-2 text-slate-500 hover:text-slate-800 dark:hover:text-white">
+                                    <XIcon className="h-7 w-7" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-4 max-h-[50vh] overflow-y-auto">
+                            <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} className="!mb-0 !shadow-none !border-none !p-0 !bg-transparent !backdrop-blur-none" />
+                        </div>
+                        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
+                            <button
+                                onClick={() => setIsFilterPanelOpen(false)}
+                                className="w-full px-6 py-3 text-lg font-bold text-white bg-rago-burgundy rounded-lg hover:bg-rago-burgundy-darker"
+                            >
+                                Ver {filteredVehicles.length} {filteredVehicles.length === 1 ? 'Resultado' : 'Resultados'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.getElementById('modal-root') || document.body
+            )}
         </div>
     );
 };
