@@ -249,7 +249,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                 
                 <div className="flex-grow overflow-y-auto">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8">
-                        <form id="vehicle-form" onSubmit={handleSubmit} className="p-6 space-y-6">
+                        <form id="vehicle-form" onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <div><label htmlFor="make" className="block text-base font-medium text-gray-700 dark:text-gray-300">Marca</label><input id="make" name="make" list="brands-datalist" value={formData.make} onChange={handleChange} required className="mt-1 form-input" /><datalist id="brands-datalist">{brands.map(brand => <option key={brand} value={brand} />)}</datalist></div>
                                 <InputField label="Modelo" name="model" value={formData.model} onChange={handleChange} required />

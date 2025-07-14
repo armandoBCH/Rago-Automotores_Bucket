@@ -51,8 +51,8 @@ const Hero: React.FC<HeroProps> = ({ searchTerm, onSearchChange }) => {
 
                 <div className="mt-8 max-w-2xl w-full mx-auto opacity-0 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
                     <form onSubmit={handleFormSubmit} className="relative bg-white/10 backdrop-blur-md p-2 rounded-2xl flex gap-2 border border-white/20 shadow-lg">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-6 pointer-events-none z-10">
-                            <SearchIcon className="h-6 w-6 text-slate-500" />
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 md:pl-6 pointer-events-none z-10">
+                            <SearchIcon className="h-5 w-5 md:h-6 md:w-6 text-slate-500" />
                         </div>
                         <input
                             type="text"
@@ -60,11 +60,11 @@ const Hero: React.FC<HeroProps> = ({ searchTerm, onSearchChange }) => {
                             aria-label="Buscar vehículo"
                             value={searchTerm}
                             onChange={(e) => onSearchChange(e.target.value)}
-                            className="w-full flex-grow pl-14 pr-5 py-4 text-lg bg-white/95 dark:bg-slate-900/90 border-transparent text-slate-800 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:border-transparent focus:ring-2 focus:ring-rago-burgundy-darker rounded-xl transition-all duration-300"
+                            className="w-full flex-grow pl-12 pr-4 py-3 text-base md:pl-14 md:pr-5 md:py-4 md:text-lg bg-white/95 dark:bg-slate-900/90 border-transparent text-slate-800 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:border-transparent focus:ring-2 focus:ring-rago-burgundy-darker rounded-xl transition-all duration-300"
                         />
                         <button
                             type="submit"
-                            className="px-8 py-4 text-lg font-bold text-white bg-rago-burgundy rounded-xl hover:bg-rago-burgundy-darker focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900/50 focus:ring-rago-burgundy-darker transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0"
+                            className="px-4 py-3 text-base md:px-8 md:py-4 md:text-lg font-bold text-white bg-rago-burgundy rounded-xl hover:bg-rago-burgundy-darker focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900/50 focus:ring-rago-burgundy-darker transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0"
                         >
                             Buscar
                         </button>
@@ -78,7 +78,7 @@ const Hero: React.FC<HeroProps> = ({ searchTerm, onSearchChange }) => {
                         className="group flex flex-col items-center gap-3 text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 rounded-full p-2"
                         aria-label="Explorar vehículos"
                     >
-                        <span className="font-semibold tracking-widest text-lg uppercase text-white drop-shadow-md transition-all">
+                        <span className="font-semibold tracking-widest text-base md:text-lg uppercase text-white drop-shadow-md transition-all">
                             Explorar
                         </span>
                         <div className="w-14 h-14 rounded-full border-2 border-white/40 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-soft-bounce group-hover:border-white/70 group-hover:bg-black/40 transition-all duration-300">
@@ -94,7 +94,7 @@ const Hero: React.FC<HeroProps> = ({ searchTerm, onSearchChange }) => {
 
                     <a
                         href="#sell-car-section"
-                        className="px-10 py-4 text-xl font-bold text-slate-800 bg-white rounded-xl hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-white transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+                        className="px-8 py-3 text-lg md:px-10 md:py-4 md:text-xl font-bold text-slate-800 bg-white rounded-xl hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-white transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
                         aria-label="Vender mi auto"
                     >
                         Vender mi Auto

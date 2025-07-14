@@ -77,7 +77,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPlayVideo }) => {
             <div className="p-5 flex flex-col flex-grow">
                 <div className="flex items-baseline justify-between gap-x-3">
                      <a href={vehicleUrl} className="min-w-0">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white truncate group-hover:text-rago-burgundy dark:group-hover:text-rago-burgundy transition-colors">{vehicle.make} {vehicle.model}</h3>
+                        <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white truncate group-hover:text-rago-burgundy dark:group-hover:text-rago-burgundy transition-colors">{vehicle.make} {vehicle.model}</h3>
                     </a>
                     <span className="text-sm font-semibold inline-block py-1 px-3 uppercase rounded-full text-rago-burgundy bg-rago-burgundy/10 dark:bg-slate-700/50 dark:text-slate-300 flex-shrink-0">
                         {vehicle.year}
@@ -85,7 +85,7 @@ const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPlayVideo }) => {
                 </div>
                 
                 <div className="flex-grow my-4">
-                    <p className="text-2xl lg:text-3xl font-black text-rago-burgundy">
+                    <p className="text-2xl md:text-3xl font-black text-rago-burgundy">
                         ${vehicle.price.toLocaleString('es-AR')}
                     </p>
                 </div>

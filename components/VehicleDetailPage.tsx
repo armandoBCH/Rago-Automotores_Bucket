@@ -1,6 +1,5 @@
 
 
-
 import React, { useMemo, useEffect, useRef } from 'react';
 import { Vehicle } from '../types';
 import ImageCarousel from './ImageCarousel';
@@ -26,7 +25,7 @@ const SpecificationItem: React.FC<{ icon: React.ReactNode; label: string; value:
             </div>
             <div>
                 <p className="text-base text-gray-500 dark:text-gray-400">{label}</p>
-                <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{value}</p>
+                <p className="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-200">{value}</p>
             </div>
         </div>
     </div>
@@ -46,9 +45,9 @@ const Breadcrumb: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
 
 const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppClick: () => void }> = ({ vehicle, whatsappLink, onWhatsAppClick }) => {
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6 shadow-subtle dark:shadow-subtle-dark">
+        <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-4 sm:p-6 shadow-subtle dark:shadow-subtle-dark">
             <div className="flex justify-between items-center gap-x-4 border-b dark:border-gray-700 pb-4 mb-6 flex-wrap">
-                <h1 className="text-3xl lg:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
                     {vehicle.make} {vehicle.model}
                 </h1>
                 <div className="flex items-center gap-x-4">
@@ -71,7 +70,7 @@ const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppCl
                 </div>
             )}
             {vehicle.is_sold ? (
-                <div className="group w-full flex items-center justify-center gap-3 text-center bg-slate-400 dark:bg-slate-700 text-white font-bold py-4 px-4 rounded-lg text-xl cursor-not-allowed">
+                <div className="group w-full flex items-center justify-center gap-3 text-center bg-slate-400 dark:bg-slate-700 text-white font-bold py-4 px-4 rounded-lg text-lg sm:text-xl cursor-not-allowed">
                     Vehículo Vendido
                 </div>
             ) : (
@@ -80,7 +79,7 @@ const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppCl
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={onWhatsAppClick}
-                    className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
+                    className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-lg sm:text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
                 >
                     <ChatBubbleIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
                     <span>Contactar por WhatsApp</span>
@@ -97,7 +96,7 @@ const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: st
             <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Especificaciones</h3>
             </div>
-            <div className="p-6 divide-y divide-gray-200 dark:divide-gray-800">
+            <div className="p-4 sm:p-6 divide-y divide-gray-200 dark:divide-gray-800">
                 {specs.map(spec => (
                     <SpecificationItem key={spec.label} icon={spec.icon} label={spec.label} value={spec.value} />
                 ))}

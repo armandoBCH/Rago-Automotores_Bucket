@@ -1,12 +1,7 @@
 
-
-
-
-
-
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
-import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, UsersIcon } from './constants';
+import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
 import { optimizeUrl } from './utils/image';
@@ -26,7 +21,6 @@ import FeaturedVehiclesSection from './components/FeaturedVehiclesSection';
 import FavoritesPage from './components/FavoritesPage';
 import { useFavorites } from './components/FavoritesProvider';
 import VerticalVideoPlayer from './components/VerticalVideoPlayer';
-import AboutUsSection from './components/AboutUsSection';
 
 type ModalState = 
     | { type: 'none' }
@@ -55,6 +49,8 @@ const App: React.FC = () => {
         if (currentAdminState && window.location.pathname === '/') return '/admin';
         return window.location.pathname;
     });
+
+    const previousPathRef = useRef(path);
 
     const fetchAllData = useCallback(async () => {
         setLoading(true);
@@ -96,6 +92,19 @@ const App: React.FC = () => {
     useEffect(() => {
         fetchAllData();
     }, [fetchAllData]);
+
+    // Reset search when navigating from a detail page back to home.
+    useEffect(() => {
+        const wasOnDetailPage = /^\/vehiculo\//.test(previousPathRef.current);
+        const isNowOnHomePage = path === '/' || path === '/index.html';
+
+        if (wasOnDetailPage && isNowOnHomePage) {
+            setSearchTerm('');
+            setFilters({ make: '', year: '', price: '', vehicleType: '' });
+        }
+
+        previousPathRef.current = path;
+    }, [path]);
     
     const navigate = useCallback((newPath: string, replace = false) => {
         const currentPath = path + window.location.search + window.location.hash;
@@ -262,7 +271,18 @@ const App: React.FC = () => {
     const filteredVehicles = useMemo(() => {
         let temp = [...vehicles];
         const term = searchTerm.toLowerCase().trim();
-        if (term) temp = temp.filter(v => `${v.make} ${v.model} ${v.year}`.toLowerCase().includes(term));
+        if (term) {
+            // Split search term into individual words
+            const searchWords = term.split(' ').filter(word => word.length > 0);
+            // Filter vehicles, ensuring every search word is present
+            temp = temp.filter(v => {
+                // Combine all searchable fields into one string for easier searching
+                const vehicleString = `${v.make} ${v.model} ${v.year} ${v.description} ${v.engine} ${v.transmission} ${v.fuelType} ${v.vehicle_type}`.toLowerCase();
+                return searchWords.every(word => vehicleString.includes(word));
+            });
+        }
+        
+        // The rest of the filters apply on top of the search term filter
         if (filters.make) temp = temp.filter(v => v.make === filters.make);
         if (filters.vehicleType) temp = temp.filter(v => v.vehicle_type === filters.vehicleType);
         if (filters.year) temp = temp.filter(v => v.year >= parseInt(filters.year, 10));
@@ -462,12 +482,12 @@ const App: React.FC = () => {
             </button>
             <nav id="mobile-menu" aria-hidden={!isMobileMenuOpen} className={`fixed top-0 right-0 h-full w-[85%] max-w-sm bg-gradient-to-br from-slate-900 via-rago-burgundy-darker to-rago-black shadow-2xl p-6 pt-20 flex flex-col text-white transform-gpu transition-transform duration-500 ease-in-out z-50 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="px-6 mb-12 text-center"><a href="/"><img src="https://i.imgur.com/zOGb0ay.jpeg" alt="Rago Automotores Logo" className="h-20 inline-block" /></a></div>
-                <ul className="flex flex-col gap-2">
-                    <li><a href="/" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><HomeIcon className="h-7 w-7 text-rago-burgundy" /><span>Inicio</span></a></li>
-                    <li><a href="/#catalog" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><CatalogIcon className="h-7 w-7 text-rago-burgundy" /><span>Catálogo</span></a></li>
-                    <li><a href="/#featured-vehicles" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><StarIcon className="h-7 w-7 text-rago-burgundy" /><span>Destacados</span></a></li>
+                <ul className="flex flex-col gap-1">
+                    <li><a href="/" className="flex items-center gap-4 px-3 py-3 text-xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><HomeIcon className="h-7 w-7 text-rago-burgundy" /><span>Inicio</span></a></li>
+                    <li><a href="/#catalog" className="flex items-center gap-4 px-3 py-3 text-xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><CatalogIcon className="h-7 w-7 text-rago-burgundy" /><span>Catálogo</span></a></li>
+                    <li><a href="/#featured-vehicles" className="flex items-center gap-4 px-3 py-3 text-xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><StarIcon className="h-7 w-7 text-rago-burgundy" /><span>Destacados</span></a></li>
                     <li>
-                        <a href="/favoritos" className="flex items-center justify-between gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors">
+                        <a href="/favoritos" className="flex items-center justify-between gap-4 px-3 py-3 text-xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors">
                             <div className="flex items-center gap-4">
                                 <HeartIcon className="h-7 w-7 text-rago-burgundy" />
                                 <span>Favoritos</span>
@@ -479,8 +499,7 @@ const App: React.FC = () => {
                             )}
                         </a>
                     </li>
-                    <li><a href="/#sell-car-section" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><SellCarIcon className="h-7 w-7 text-rago-burgundy" /><span>Vender mi Auto</span></a></li>
-                    <li><a href="/#about-us-section" className="flex items-center gap-4 px-3 py-4 text-2xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><UsersIcon className="h-7 w-7 text-rago-burgundy" /><span>Sobre Nosotros</span></a></li>
+                    <li><a href="/#sell-car-section" className="flex items-center gap-4 px-3 py-3 text-xl font-semibold text-slate-200 rounded-lg hover:bg-white/10 transition-colors"><SellCarIcon className="h-7 w-7 text-rago-burgundy" /><span>Vender mi Auto</span></a></li>
                 </ul>
                 <div className="mt-auto pt-8 border-t border-slate-700/50">
                     <div className="flex justify-center gap-x-8">
@@ -498,7 +517,6 @@ const App: React.FC = () => {
                      <div key={path} className="animate-fade-in">{renderPublicContent()}</div>
                 </main>
                 {isHomePage && <SellYourCarSection />}
-                {isHomePage && <AboutUsSection />}
                 <Footer />
             </div>
             {isHomePage && <ScrollToTopButton />}

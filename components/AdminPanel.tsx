@@ -1,8 +1,5 @@
 
 
-
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon } from '../constants';
@@ -26,7 +23,7 @@ interface AdminPanelProps {
 const TabButton: React.FC<{ name: string; icon: React.ReactNode; isActive: boolean; onClick: () => void }> = ({ name, icon, isActive, onClick }) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-3 whitespace-nowrap py-4 px-2 border-b-2 font-semibold text-lg transition-colors focus:outline-none ${
+        className={`flex items-center gap-2 sm:gap-3 flex-shrink-0 py-3 px-1 sm:px-2 border-b-2 font-semibold text-base sm:text-lg transition-colors focus:outline-none ${
             isActive
                 ? 'border-rago-burgundy text-rago-burgundy'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
@@ -44,7 +41,7 @@ const InteractionCard: React.FC<{ title: string; value: string | number; icon: R
                 {icon}
             </div>
             <div>
-                <p className="text-4xl font-bold text-slate-900 dark:text-white">{value}</p>
+                <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">{value}</p>
                 <p className="text-base text-slate-500 dark:text-slate-400 mt-1">{title}</p>
             </div>
         </div>
@@ -52,14 +49,14 @@ const InteractionCard: React.FC<{ title: string; value: string | number; icon: R
 );
 
 const KeyMetricCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-5">
-            <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-700/50 text-rago-burgundy p-4 rounded-xl">
+    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-4 sm:gap-5">
+            <div className="flex-shrink-0 bg-slate-100 dark:bg-slate-700/50 text-rago-burgundy p-3 sm:p-4 rounded-xl">
                 {icon}
             </div>
             <div>
-                <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{value}</p>
-                <p className="text-base font-medium text-slate-500 dark:text-slate-400 mt-1">{title}</p>
+                <p className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">{value}</p>
+                <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400 mt-1">{title}</p>
             </div>
         </div>
     </div>
@@ -80,10 +77,10 @@ const RankItem: React.FC<{ vehicle: Vehicle; value: number | string; index: numb
 );
 
 const RankingList: React.FC<{ title: string; data: { vehicle: Vehicle; value: number }[]; icon: React.ReactNode; }> = ({ title, data, icon }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 mb-4">
             <span className="text-rago-burgundy">{icon}</span>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{title}</h3>
         </div>
         {data.length > 0 ? (
             <ul className="space-y-1">
@@ -181,15 +178,15 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
         <div className="space-y-10 animate-fade-in">
             {/* KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <KeyMetricCard title="Vistas a Detalles" value={kpis.totalDetailViews} icon={<EyeIcon className="h-8 w-8" />} />
-                <KeyMetricCard title="Clics a Detalles" value={kpis.totalCardClicks} icon={<MousePointerClickIcon className="h-8 w-8" />} />
-                <KeyMetricCard title="Contactos WhatsApp" value={kpis.totalContacts} icon={<MessageSquareIcon className="h-8 w-8" />} />
-                <KeyMetricCard title="Guardados en Favoritos" value={kpis.totalFavorites} icon={<HeartIcon className="h-8 w-8" />} />
+                <KeyMetricCard title="Vistas a Detalles" value={kpis.totalDetailViews} icon={<EyeIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
+                <KeyMetricCard title="Clics a Detalles" value={kpis.totalCardClicks} icon={<MousePointerClickIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
+                <KeyMetricCard title="Contactos WhatsApp" value={kpis.totalContacts} icon={<MessageSquareIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
+                <KeyMetricCard title="Guardados en Favoritos" value={kpis.totalFavorites} icon={<HeartIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
             </div>
 
             {/* Rankings */}
             <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Rankings de Vehículos</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Rankings de Vehículos</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <RankingList title="Más Vistos" data={rankings.mostViewed} icon={<EyeIcon className="h-6 w-6"/>} />
                     <RankingList title="Más Contactados" data={rankings.mostContacted} icon={<MessageSquareIcon className="h-6 w-6"/>} />
@@ -199,13 +196,13 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
             
             {/* Full Performance Table */}
             <div>
-                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Rendimiento Detallado</h2>
+                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Rendimiento Detallado</h2>
                  <VehiclePerformanceTable performanceData={performanceData} />
             </div>
 
 
             <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Generales</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Generales</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <InteractionCard title="Vistas 'Vender mi Auto'" value={keyInteractions.sellCarViews} icon={<CircleDollarSignIcon className="h-8 w-8" />} />
                     <InteractionCard title="Interés en Vender" value={keyInteractions.sellCarInterest} icon={<FileCheckIcon className="h-8 w-8" />} />
@@ -331,9 +328,9 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsRe
     }, [movePopover.anchorEl]);
 
     return (
-        <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fade-in">
+        <div className="relative bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fade-in">
              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                 <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gestión de Inventario</h2>
+                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Gestión de Inventario</h2>
                  <div className="flex items-center gap-4 w-full md:w-auto flex-col sm:flex-row">
                      <div className="relative w-full sm:w-64">
                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -408,7 +405,7 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsRe
                                      </button>
                                 </td>
                                 <td className="p-4 text-right">
-                                    <div className="flex items-center justify-end gap-1">
+                                    <div className="flex items-center justify-end gap-1 flex-wrap">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -487,7 +484,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
         <div className="bg-slate-100 dark:bg-slate-900/50 p-4 sm:p-6 lg:p-8 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800/50 min-h-[85vh]">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Panel de Administración</h1>
+                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Panel de Administración</h1>
                     <p className="text-lg text-slate-500 dark:text-slate-400 mt-1">Gestioná tu inventario y analizá las estadísticas.</p>
                 </div>
                 <button
@@ -500,9 +497,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
             </div>
             
             <div className="border-b border-slate-200 dark:border-slate-700">
-                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
-                    <TabButton name="Inventario" icon={<FileCheckIcon className="h-6 w-6"/>} isActive={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} />
-                    <TabButton name="Estadísticas" icon={<StatsIcon className="h-6 w-6"/>} isActive={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
+                <nav className="-mb-px flex space-x-4 sm:space-x-6" aria-label="Tabs">
+                    <TabButton name="Inventario" icon={<FileCheckIcon className="h-5 w-5 sm:h-6 sm:w-6"/>} isActive={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} />
+                    <TabButton name="Estadísticas" icon={<StatsIcon className="h-5 w-5 sm:h-6 sm:w-6"/>} isActive={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
                 </nav>
             </div>
             
