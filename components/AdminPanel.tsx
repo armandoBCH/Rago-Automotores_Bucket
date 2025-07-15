@@ -4,6 +4,8 @@
 
 
 
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent, SiteData, Review, FinancingConfig, ReviewUpdate } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, CogIcon } from '../constants';
@@ -161,7 +163,7 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'siteData' | '
 };
 
 // --- REVIEWS VIEW ---
-const ReviewsPanel: React.FC<{ onDataUpdate: () => void }> = ({ onDataUpdate }) => {
+const ReviewsPanel: React.FC<{ onDataUpdate: () => void; vehicles: Vehicle[] }> = ({ onDataUpdate, vehicles }) => {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [modal, setModal] = useState<{ type: 'edit' | 'delete', data: Review } | null>(null);
@@ -209,14 +211,38 @@ const ReviewsPanel: React.FC<{ onDataUpdate: () => void }> = ({ onDataUpdate }) 
         } catch (error) { alert('Error al eliminar la reseña.'); }
     };
     
+    const ToggleButton: React.FC<{isToggled: boolean, onToggle: ()=>void}> = ({isToggled, onToggle}) => (
+        <button onClick={onToggle} className={`px-3 py-1 text-sm font-semibold rounded-full transition-colors ${isToggled ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300' : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400'}`}>
+            {isToggled ? 'Sí' : 'No'}
+        </button>
+    );
+
     return (
-        <div className="animate-fade-in"><h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-6">Gestionar Reseñas</h2><div className="overflow-x-auto bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700"><table className="w-full text-left"><thead><tr className="border-b dark:border-slate-700"><th className="p-4">Cliente</th><th className="p-4">Calificación</th><th className="p-4">Comentario</th><th className="p-4 text-center">Visible</th><th className="p-4 text-right">Acciones</th></tr></thead><tbody>{loading ? <tr><td colSpan={5} className="text-center p-8">Cargando reseñas...</td></tr> : reviews.map(review => (<tr key={review.id} className="border-b dark:border-slate-700/50">
-            <td className="p-4 font-semibold">{review.customer_name}</td>
-            <td className="p-4"><div className="flex">{[...Array(5)].map((_, i) => <StarIcon key={i} className={`h-5 w-5 ${i < review.rating ? 'text-amber-400' : 'text-slate-300'}`} filled={i < review.rating} />)}</div></td>
-            <td className="p-4 max-w-sm"><p className="truncate">{review.comment}</p>{review.response_from_owner && <p className="text-xs text-green-600 mt-1 italic">Tiene respuesta</p>}</td>
-            <td className="p-4 text-center"><button onClick={() => handleUpdate({ id: review.id, is_visible: !review.is_visible })} className={`px-3 py-1 text-sm font-semibold rounded-full ${review.is_visible ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{review.is_visible ? 'Sí' : 'No'}</button></td>
-            <td className="p-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => setModal({ type: 'edit', data: review })} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"><EditIcon /></button><button onClick={() => setModal({ type: 'delete', data: review })} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/50 rounded"><TrashIcon /></button></div></td>
-        </tr>))}</tbody></table></div>
+        <div className="animate-fade-in"><h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-6">Gestionar Reseñas</h2><div className="overflow-x-auto bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700"><table className="w-full text-left">
+            <thead className="text-sm text-slate-700 uppercase bg-slate-100 dark:bg-slate-700/50 dark:text-slate-400">
+                <tr className="border-b dark:border-slate-700">
+                    <th className="p-4">Cliente</th>
+                    <th className="p-4">Vehículo</th>
+                    <th className="p-4">Comentario</th>
+                    <th className="p-4 text-center">Visible (Detalle)</th>
+                    <th className="p-4 text-center">Visible (Inicio)</th>
+                    <th className="p-4 text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+            {loading ? <tr><td colSpan={6} className="text-center p-8">Cargando reseñas...</td></tr> : reviews.map(review => {
+                const vehicle = review.vehicle_id ? vehicles.find(v => v.id === review.vehicle_id) : null;
+                return (<tr key={review.id} className="border-b dark:border-slate-700/50">
+                    <td className="p-4 font-semibold whitespace-nowrap">{review.customer_name}<div className="flex mt-1">{[...Array(5)].map((_, i) => <StarIcon key={i} className={`h-4 w-4 ${i < review.rating ? 'text-amber-400' : 'text-slate-300'}`} filled={i < review.rating} />)}</div></td>
+                    <td className="p-4 text-sm">{vehicle ? `${vehicle.make} ${vehicle.model}` : <span className="text-slate-400 italic">General</span>}</td>
+                    <td className="p-4 max-w-sm"><p className="line-clamp-2" title={review.comment || ''}>{review.comment}</p>{review.response_from_owner && <p className="text-xs text-green-600 mt-1 italic">Tiene respuesta</p>}</td>
+                    <td className="p-4 text-center"><ToggleButton isToggled={review.is_visible} onToggle={() => handleUpdate({ id: review.id, is_visible: !review.is_visible })} /></td>
+                    <td className="p-4 text-center"><ToggleButton isToggled={review.show_on_homepage} onToggle={() => handleUpdate({ id: review.id, show_on_homepage: !review.show_on_homepage })} /></td>
+                    <td className="p-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => setModal({ type: 'edit', data: review })} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded" title="Editar y Responder"><EditIcon /></button><button onClick={() => setModal({ type: 'delete', data: review })} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/50 rounded" title="Eliminar"><TrashIcon /></button></div></td>
+                </tr>)
+            })}
+            </tbody>
+        </table></div>
         {modal?.type === 'delete' && <ConfirmationModal isOpen={true} onClose={() => setModal(null)} onConfirm={() => handleDelete(modal.data.id)} title="Eliminar Reseña" message="¿Seguro que quieres eliminar esta reseña?" />}
         {/* Edit modal would be here */}
         </div>
@@ -299,7 +325,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
             <div className="mt-8">
                 {activeTab === 'inventory' && <InventoryView {...props} />}
                 {activeTab === 'stats' && <StatsView vehicles={props.vehicles} allEvents={props.allEvents} onAnalyticsReset={props.onDataUpdate} />}
-                {activeTab === 'reviews' && <ReviewsPanel onDataUpdate={props.onDataUpdate} />}
+                {activeTab === 'reviews' && <ReviewsPanel onDataUpdate={props.onDataUpdate} vehicles={props.vehicles} />}
                 {activeTab === 'config' && <ConfigPanel config={props.siteData.financingConfig} onDataUpdate={props.onDataUpdate} />}
             </div>
         </div>

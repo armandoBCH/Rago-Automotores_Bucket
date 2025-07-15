@@ -23,14 +23,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         if (req.method === 'GET') {
             const [reviewsRes, financingConfigRes] = await Promise.all([
-                supabaseAdmin.from('reviews').select('*').eq('is_visible', true).order('created_at', { ascending: false }),
+                supabaseAdmin.from('reviews').select('*').or('is_visible.eq.true,show_on_homepage.eq.true').order('created_at', { ascending: false }),
                 supabaseAdmin.from('site_config').select('value').eq('key', 'financing').single()
             ]);
 
             if (reviewsRes.error) throw reviewsRes.error;
             if (financingConfigRes.error) {
                 // If config doesn't exist, return a default.
-                if (financingConfigRes.code === 'PGRST116') {
+                if (financingConfigRes.error.code === 'PGRST116') {
                      const defaultConfig = { maxAmount: 5000000, maxTerm: 12, interestRate: 3 };
                      return res.status(200).json({ 
                         reviews: reviewsRes.data || [], 
@@ -64,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 comment,
                 vehicle_id: vehicle_id ? Number(vehicle_id) : null,
                 is_visible: false, // All reviews start as hidden
+                show_on_homepage: false, // All reviews start as hidden from homepage
             });
 
             if (error) throw error;

@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Review } from '../types';
 import { StarIcon, ArrowLeftIcon, ArrowRightIcon } from '../constants';
 
@@ -31,8 +31,12 @@ const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
 
 const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+    
+    const homepageReviews = useMemo(() => {
+        return reviews.filter(r => r.show_on_homepage);
+    }, [reviews]);
 
-    if (reviews.length === 0) {
+    if (homepageReviews.length === 0) {
         return null;
     }
 
@@ -59,13 +63,13 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
                 </div>
                 <div className="relative">
                      <div ref={scrollContainerRef} className="flex gap-6 overflow-x-auto py-8 -mx-4 px-4 md:-mx-6 md:px-6 hide-scrollbar">
-                        {reviews.map((review) => (
+                        {homepageReviews.map((review) => (
                              <div key={review.id} className="flex-shrink-0 w-[90%] sm:w-1/2 md:w-1/3">
                                 <ReviewCard review={review} />
                             </div>
                         ))}
                     </div>
-                     {reviews.length > 3 && (
+                     {homepageReviews.length > 3 && (
                         <>
                             <button 
                                 onClick={() => scroll('left')} 

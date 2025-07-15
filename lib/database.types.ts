@@ -4,7 +4,7 @@ export type Json =
   | number
   | boolean
   | null
-  | { [key: string]: Json | undefined }
+  | { [key: string]: Json }
   | Json[]
 
 export type Database = {
@@ -29,7 +29,14 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       reviews: {
         Row: {
@@ -41,6 +48,7 @@ export type Database = {
           is_visible: boolean
           response_from_owner: string | null
           vehicle_id: number | null
+          show_on_homepage: boolean
         }
         Insert: {
           id?: number
@@ -51,6 +59,7 @@ export type Database = {
           is_visible?: boolean
           response_from_owner?: string | null
           vehicle_id?: number | null
+          show_on_homepage?: boolean
         }
         Update: {
           id?: number
@@ -61,6 +70,7 @@ export type Database = {
           is_visible?: boolean
           response_from_owner?: string | null
           vehicle_id?: number | null
+          show_on_homepage?: boolean
         }
         Relationships: [
           {

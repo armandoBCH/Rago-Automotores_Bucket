@@ -5,6 +5,7 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate, SiteData, Review } from './types';
@@ -479,7 +480,7 @@ const App: React.FC = () => {
     const renderPublicContent = () => {
         if (loading) return <div className="text-center py-16">Cargando...</div>;
         if (dbError) return <div className="text-center py-16 text-red-500">{dbError}</div>;
-        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl} financingConfig={siteData.financingConfig} /> : <NotFoundPage />;
+        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl} financingConfig={siteData.financingConfig} reviews={siteData.reviews} /> : <NotFoundPage />;
         if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl}/>;
         if (isLeaveReviewPage) return <LeaveReviewPage vehicles={vehicles} />;
         if (isHomePage) return (
