@@ -33,58 +33,11 @@ export type Database = {
           {
             foreignKeyName: "analytics_events_vehicle_id_fkey"
             columns: ["vehicle_id"]
+            isOneToOne: false
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           }
         ]
-      }
-      reviews: {
-        Row: {
-          id: number
-          created_at: string
-          customer_name: string
-          rating: number
-          review_text: string | null
-          is_approved: boolean
-          title: string | null
-        }
-        Insert: {
-          id?: number
-          created_at?: string
-          customer_name: string
-          rating: number
-          review_text?: string | null
-          is_approved?: boolean
-          title?: string | null
-        }
-        Update: {
-          id?: number
-          created_at?: string
-          customer_name?: string
-          rating?: number
-          review_text?: string | null
-          is_approved?: boolean
-          title?: string | null
-        }
-        Relationships: []
-      }
-      settings: {
-        Row: {
-          id: number
-          key: string
-          value: Json
-        }
-        Insert: {
-          id?: number
-          key: string
-          value: Json
-        }
-        Update: {
-          id?: number
-          key?: string
-          value?: Json
-        }
-        Relationships: []
       }
       vehicles: {
         Row: {
@@ -96,8 +49,8 @@ export type Database = {
           price: number
           mileage: number
           engine: string
-          transmission: "Automática" | "Manual"
-          fuel_type: string
+          transmission: 'Automática' | 'Manual'
+          fuelType: string
           vehicle_type: string
           description: string
           images: string[]
@@ -115,8 +68,8 @@ export type Database = {
           price: number
           mileage: number
           engine: string
-          transmission: "Automática" | "Manual"
-          fuel_type: string
+          transmission: 'Automática' | 'Manual'
+          fuelType: string
           vehicle_type: string
           description: string
           images: string[]
@@ -134,8 +87,8 @@ export type Database = {
           price?: number
           mileage?: number
           engine?: string
-          transmission?: "Automática" | "Manual"
-          fuel_type?: string
+          transmission?: 'Automática' | 'Manual'
+          fuelType?: string
           vehicle_type?: string
           description?: string
           images?: string[]

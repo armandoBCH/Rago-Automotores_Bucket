@@ -32,7 +32,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             const data = await response.json();
 
             if (response.ok) {
-                sessionStorage.setItem('rago-admin-pass', password);
                 onLoginSuccess();
             } else {
                 setError(data.message || 'Ocurrió un error. Inténtalo de nuevo.');

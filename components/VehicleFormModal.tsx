@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Vehicle, VehicleFormData } from '../types';
 import { XIcon } from '../constants';
@@ -9,15 +7,15 @@ import VehicleCard from './VehicleCard';
 import ImageCarousel from './ImageCarousel';
 import ImageUploader, { ImageFile } from './ImageUploader';
 import { compressImage } from '../utils/image';
-import { getSupabaseClient } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 
 const DRAFT_STORAGE_KEY = 'rago-new-vehicle-draft';
 
-type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'created_at' | 'images' | 'display_order' | 'fuel_type' | 'video_url'> & {
+type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'created_at' | 'images' | 'display_order' | 'fuelType' | 'video_url'> & {
     year: string;
     price: string;
     mileage: string;
-    fuel_type: string;
+    fuelType: string;
     customFuelType?: string;
     customMake?: string;
     customVehicleType?: string;
@@ -26,7 +24,7 @@ type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'create
 
 const getInitialFormState = (): FormDataState => ({
     make: '', model: '', year: '', price: '', mileage: '', engine: '',
-    transmission: 'Manual', fuel_type: 'Nafta', vehicle_type: '', customFuelType: '', customMake: '', customVehicleType: '', description: '',
+    transmission: 'Manual', fuelType: 'Nafta', vehicle_type: '', customFuelType: '', customMake: '', customVehicleType: '', description: '',
     is_featured: false, is_sold: false, video_url: '',
 });
 
@@ -65,7 +63,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
     const imageFilesRef = useRef(imageFiles);
     imageFilesRef.current = imageFiles;
 
-    const isOtherFuelType = formData.fuel_type === 'Otro';
+    const isOtherFuelType = formData.fuelType === 'Otro';
     const isOtherMake = formData.make === 'Otro';
     const isOtherVehicleType = formData.vehicle_type === 'Otro';
 
@@ -83,7 +81,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             if (initialData) { // Editing existing vehicle
                 localStorage.removeItem(DRAFT_STORAGE_KEY);
                 const standardFuelTypes = ['Nafta', 'Diesel', 'GNC'];
-                const isStandardFuel = standardFuelTypes.includes(initialData.fuel_type);
+                const isStandardFuel = standardFuelTypes.includes(initialData.fuelType);
                 const isStandardMake = brands.includes(initialData.make);
                 const isStandardVehicleType = VEHICLE_TYPES.includes(initialData.vehicle_type);
 
@@ -93,8 +91,8 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                     year: String(initialData.year),
                     price: String(initialData.price),
                     mileage: String(initialData.mileage),
-                    fuel_type: isStandardFuel ? initialData.fuel_type : 'Otro',
-                    customFuelType: isStandardFuel ? '' : initialData.fuel_type,
+                    fuelType: isStandardFuel ? initialData.fuelType : 'Otro',
+                    customFuelType: isStandardFuel ? '' : initialData.fuelType,
                     make: isStandardMake ? initialData.make : 'Otro',
                     customMake: isStandardMake ? '' : initialData.make,
                     vehicle_type: isStandardVehicleType ? initialData.vehicle_type : 'Otro',
@@ -143,7 +141,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             mileage: parseInt(formData.mileage) || 0,
             engine: formData.engine || 'Motor',
             transmission: formData.transmission,
-            fuel_type: isOtherFuelType ? formData.customFuelType || 'Combustible' : formData.fuel_type,
+            fuelType: isOtherFuelType ? formData.customFuelType || 'Combustible' : formData.fuelType,
             vehicle_type: isOtherVehicleType ? formData.customVehicleType || 'Tipo' : formData.vehicle_type || 'Tipo',
             description: formData.description || 'Descripción del vehículo.',
             images: validImages.length > 0 ? validImages : ['https://i.imgur.com/g2a4A0a.png'],
@@ -192,14 +190,6 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             return;
         }
 
-        const password = sessionStorage.getItem('rago-admin-pass');
-        if (newFilesToUpload.length > 0 && !password) {
-            alert('Error de autenticación. No se pueden subir imágenes. Por favor, inicie sesión de nuevo.');
-            setIsSubmitting(false);
-            return;
-        }
-
-        const supabase = await getSupabaseClient();
         setSubmitProgress({ total: newFilesToUpload.length, completed: 0 });
 
         const uploadPromises = newFilesToUpload.map(async (imageFile) => {
@@ -207,13 +197,13 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             try {
                 const compressedFile = await compressImage(imageFile.file);
                 
-                const signedUrlResponse = await fetch('/api/create-signed-upload-url', {
+                const signedUrlResponse = await fetch('/api/admin', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-admin-password': password || ''
-                    },
-                    body: JSON.stringify({ fileName: compressedFile.name, fileType: compressedFile.type }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'createSignedUploadUrl',
+                        payload: { fileName: compressedFile.name, fileType: compressedFile.type }
+                    }),
                 });
 
                 if (!signedUrlResponse.ok) throw new Error('Failed to get signed URL info.');
@@ -238,8 +228,8 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
         const existingUrls = imageFiles.filter(f => f.url && !f.file).map(f => f.url);
         const finalImageUrls = [...existingUrls, ...uploadedUrls];
 
-        const fuel_type = isOtherFuelType ? formData.customFuelType?.trim() : formData.fuel_type;
-        if (isOtherFuelType && !fuel_type) {
+        const fuelType = isOtherFuelType ? formData.customFuelType?.trim() : formData.fuelType;
+        if (isOtherFuelType && !fuelType) {
             alert("Por favor, especifique el tipo de combustible.");
             setIsSubmitting(false);
             return;
@@ -269,7 +259,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             mileage: parseInt(formData.mileage) || 0,
             engine: formData.engine,
             transmission: formData.transmission,
-            fuel_type: fuel_type || 'Nafta',
+            fuelType: fuelType || 'Nafta',
             vehicle_type: vehicle_type || 'N/A',
             description: formData.description,
             images: finalImageUrls,
@@ -346,7 +336,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                                 <InputField label="Kilometraje (km)" name="mileage" type="text" inputMode="numeric" value={formData.mileage} onChange={handleChange} required />
                                 <InputField label="Motor" name="engine" value={formData.engine} onChange={handleChange} required />
                                 <div><label htmlFor="transmission" className="block text-base font-medium text-gray-700 dark:text-gray-300">Transmisión</label><select id="transmission" name="transmission" value={formData.transmission} onChange={handleChange} className="mt-1 form-input"><option>Manual</option><option>Automática</option></select></div>
-                                 <div><label htmlFor="fuel_type" className="block text-base font-medium text-gray-700 dark:text-gray-300">Tipo de Combustible</label><select id="fuel_type" name="fuel_type" value={formData.fuel_type} onChange={handleChange} className="mt-1 form-input"><option>Nafta</option><option>Diesel</option><option>GNC</option><option value="Otro">Otro</option></select></div>
+                                 <div><label htmlFor="fuelType" className="block text-base font-medium text-gray-700 dark:text-gray-300">Tipo de Combustible</label><select id="fuelType" name="fuelType" value={formData.fuelType} onChange={handleChange} className="mt-1 form-input"><option>Nafta</option><option>Diesel</option><option>GNC</option><option value="Otro">Otro</option></select></div>
                                 {isOtherFuelType && <div><label htmlFor="customFuelType" className="block text-base font-medium text-gray-700 dark:text-gray-300">Especificar Combustible</label><input id="customFuelType" name="customFuelType" type="text" value={formData.customFuelType || ''} onChange={handleChange} required={isOtherFuelType} className="mt-1 form-input" placeholder="Ej: Eléctrico"/></div>}
                             </div>
                             <div>

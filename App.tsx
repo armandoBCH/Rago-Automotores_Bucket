@@ -1,9 +1,12 @@
 
+
+
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate, Review } from './types';
-import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, SlidersIcon, XIcon, PencilRulerIcon, CogIcon } from './constants';
-import { getSupabaseClient } from './lib/supabaseClient';
+import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
+import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, SlidersIcon, XIcon } from './constants';
+import { supabase } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
 import { optimizeUrl } from './utils/image';
 import Header from './components/Header';
@@ -22,18 +25,14 @@ import FeaturedVehiclesSection from './components/FeaturedVehiclesSection';
 import FavoritesPage from './components/FavoritesPage';
 import { useFavorites } from './components/FavoritesProvider';
 import VerticalVideoPlayer from './components/VerticalVideoPlayer';
-import ReviewsSection from './components/ReviewsSection';
-import SubmitReviewModal from './components/SubmitReviewModal';
 
 type ModalState = 
     | { type: 'none' }
     | { type: 'form'; vehicle?: Vehicle }
-    | { type: 'confirmDelete'; vehicleId: number }
-    | { type: 'submitReview' };
+    | { type: 'confirmDelete'; vehicleId: number };
 
 const App: React.FC = () => {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [reviews, setReviews] = useState<Review[]>([]);
     const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [dbError, setDbError] = useState<string | null>(null);
@@ -62,25 +61,20 @@ const App: React.FC = () => {
         setLoading(true);
         setDbError(null);
         try {
-            const supabase = await getSupabaseClient();
+            // Fetch vehicles always, now sorted by the new custom order field
             const vehiclesResult = await supabase
                 .from('vehicles')
-                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuel_type,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
+                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
+                .order('display_order', { ascending: true })
                 .order('is_sold', { ascending: true })
-                .order('display_order', { ascending: true });
+                .order('created_at', { ascending: false });
             
             if (vehiclesResult.error) throw vehiclesResult.error;
             setVehicles(vehiclesResult.data || []);
-            
-            const reviewsResponse = await fetch('/api/reviews');
-            if(reviewsResponse.ok) {
-                setReviews(await reviewsResponse.json());
-            } else {
-                console.error("Could not fetch reviews");
-            }
 
+            // Conditionally fetch analytics only for admins
             if (isAdmin) {
-                const response = await fetch('/api/analytics', { headers: getAdminAuthHeaders() });
+                const response = await fetch('/api/admin');
                 if (!response.ok) {
                     console.error('Could not fetch analytics:', await response.text());
                     setAnalyticsEvents([]);
@@ -89,7 +83,7 @@ const App: React.FC = () => {
                     setAnalyticsEvents(analyticsData);
                 }
             } else {
-                setAnalyticsEvents([]);
+                setAnalyticsEvents([]); // Not admin, ensure analytics are clear
             }
 
         } catch (err: any) {
@@ -113,6 +107,7 @@ const App: React.FC = () => {
         }
     }, [path]);
 
+    // Reset search when navigating from a detail page back to home.
     useEffect(() => {
         const wasOnDetailPage = /^\/vehiculo\//.test(previousPathRef.current);
         const isNowOnHomePage = path === '/' || path === '/index.html';
@@ -144,14 +139,6 @@ const App: React.FC = () => {
             const target = event.target as HTMLElement;
             const anchor = target.closest('a');
             if (!anchor || !anchor.href || anchor.target === '_blank' || event.metaKey || event.ctrlKey) return;
-            
-            if (anchor.dataset.modal) {
-                event.preventDefault();
-                if(anchor.dataset.modal === 'review') {
-                    setModalState({ type: 'submitReview' });
-                }
-                return;
-            }
 
             const destinationUrl = new URL(anchor.href, window.location.origin);
             if (destinationUrl.origin !== window.location.origin) return;
@@ -208,7 +195,6 @@ const App: React.FC = () => {
 
     const handleLogout = () => {
         sessionStorage.removeItem('rago-admin');
-        sessionStorage.removeItem('rago-admin-pass');
         setIsAdmin(false);
         navigate('/');
     };
@@ -226,25 +212,29 @@ const App: React.FC = () => {
         return vehicles.find(v => v.id === vehicleId);
     }, [vehicleId, vehicles]);
     
+     // SEO and Metadata Management
     useEffect(() => {
         const head = document.head;
         const updateMeta = (selector: string, content: string) => head.querySelector(selector)?.setAttribute('content', content);
         const updateLink = (selector: string, href: string) => head.querySelector(selector)?.setAttribute('href', href);
         
+        // Canonical URL update for all pages
         const canonicalUrl = window.location.origin + path;
         updateLink('link[rel="canonical"]', canonicalUrl);
         updateMeta('meta[property="og:url"]', canonicalUrl);
         
+        // Remove existing structured data
         head.querySelectorAll('script[type="application/ld+json"]').forEach(tag => tag.remove());
         
         if (isHomePage) {
             document.title = 'Rago Automotores - Venta de Usados Seleccionados en Olavarría';
             updateMeta('meta[name="description"]', 'Encontrá tu próximo vehículo en Rago Automotores. Ofrecemos un catálogo de autos usados seleccionados en Olavarría. Calidad, confianza y la mejor financiación.');
-            updateMeta('meta[property="og:title"]', 'Rago Automotoores - Catálogo de Vehículos');
+            updateMeta('meta[property="og:title"]', 'Rago Automotores - Catálogo de Vehículos');
             updateMeta('meta[property="og:description"]', 'Tu concesionaria de confianza para vehículos seleccionados. Calidad y transparencia en cada venta.');
             const ogImageUrl = optimizeUrl('https://res.cloudinary.com/dbq5jp6jn/image/upload/v1752339636/WhatsApp_Image_2025-07-12_at_13.57.13_1_va1jyr.webp', { w: 1200, h: 630, fit: 'cover', q: 80, output: 'jpeg' });
             updateMeta('meta[property="og:image"]', ogImageUrl);
 
+            // Add Organization JSON-LD for homepage
             const orgSchema = {
                 '@context': 'https://schema.org',
                 '@type': 'AutoDealer',
@@ -296,13 +286,17 @@ const App: React.FC = () => {
         let temp = [...vehicles];
         const term = searchTerm.toLowerCase().trim();
         if (term) {
+            // Split search term into individual words
             const searchWords = term.split(' ').filter(word => word.length > 0);
+            // Filter vehicles, ensuring every search word is present
             temp = temp.filter(v => {
-                const vehicleString = `${v.make} ${v.model} ${v.year} ${v.description} ${v.engine} ${v.transmission} ${v.fuel_type} ${v.vehicle_type}`.toLowerCase();
+                // Combine all searchable fields into one string for easier searching
+                const vehicleString = `${v.make} ${v.model} ${v.year} ${v.description} ${v.engine} ${v.transmission} ${v.fuelType} ${v.vehicle_type}`.toLowerCase();
                 return searchWords.every(word => vehicleString.includes(word));
             });
         }
         
+        // The rest of the filters apply on top of the search term filter
         if (filters.make) temp = temp.filter(v => v.make === filters.make);
         if (filters.vehicleType) temp = temp.filter(v => v.vehicle_type === filters.vehicleType);
         if (filters.year) temp = temp.filter(v => v.year >= parseInt(filters.year, 10));
@@ -327,24 +321,12 @@ const App: React.FC = () => {
     const handleDeleteVehicleClick = (vehicleId: number) => setModalState({ type: 'confirmDelete', vehicleId });
     const handleCloseModal = () => setModalState({ type: 'none' });
 
-    const getAdminAuthHeaders = () => {
-        const password = sessionStorage.getItem('rago-admin-pass');
-        if (!password) {
-            alert('Error de autenticación. Por favor, inicie sesión de nuevo.');
-            throw new Error('Admin password not found in session storage.');
-        }
-        return {
-            'Content-Type': 'application/json',
-            'x-admin-password': password,
-        };
-    };
-
     const handleSaveVehicle = async (vehicleData: VehicleFormData) => {
         try {
-            const response = await fetch('/api/vehicles', {
+            const response = await fetch('/api/admin', {
                 method: 'POST',
-                headers: getAdminAuthHeaders(),
-                body: JSON.stringify(vehicleData),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'saveVehicle', payload: vehicleData }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al guardar el vehículo.');
@@ -358,10 +340,13 @@ const App: React.FC = () => {
     
     const handleToggleFeatured = async (vehicleId: number, currentStatus: boolean) => {
        try {
-            const response = await fetch('/api/vehicles', {
+            const response = await fetch('/api/admin', {
                 method: 'POST',
-                headers: getAdminAuthHeaders(),
-                body: JSON.stringify({ id: vehicleId, is_featured: !currentStatus }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'saveVehicle',
+                    payload: { id: vehicleId, is_featured: !currentStatus }
+                }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al actualizar el vehículo.');
@@ -374,14 +359,17 @@ const App: React.FC = () => {
     const handleToggleSold = async (vehicleId: number, currentStatus: boolean) => {
        try {
             const updatePayload: VehicleUpdate = { is_sold: !currentStatus };
-            if (!currentStatus === true) {
+            if (!currentStatus === true) { // This means we are marking it as sold
                 updatePayload.is_featured = false;
             }
 
-            const response = await fetch('/api/vehicles', {
+            const response = await fetch('/api/admin', {
                 method: 'POST',
-                headers: getAdminAuthHeaders(),
-                body: JSON.stringify({ id: vehicleId, ...updatePayload }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'saveVehicle',
+                    payload: { id: vehicleId, ...updatePayload }
+                }),
             });
 
             const data = await response.json();
@@ -397,10 +385,13 @@ const App: React.FC = () => {
         if (modalState.type !== 'confirmDelete') return;
         setIsDeleting(true);
         try {
-            const response = await fetch('/api/vehicles', {
-                method: 'DELETE',
-                headers: getAdminAuthHeaders(),
-                body: JSON.stringify({ vehicleId: modalState.vehicleId }),
+            const response = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'deleteVehicle',
+                    payload: { vehicleId: modalState.vehicleId }
+                }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al eliminar.');
@@ -415,22 +406,33 @@ const App: React.FC = () => {
     
     const handleReorder = async (reorderedItems: Vehicle[]) => {
         const originalVehicles = [...vehicles];
+        
+        // Optimistic update
         setVehicles(reorderedItems);
-        const updatePayload = reorderedItems.map((vehicle, index) => ({ id: vehicle.id, display_order: index }));
+    
+        const updatePayload = reorderedItems.map((vehicle, index) => ({
+            id: vehicle.id,
+            display_order: index
+        }));
+        
         try {
-            const response = await fetch('/api/vehicles', {
-                method: 'PATCH',
-                headers: getAdminAuthHeaders(),
-                body: JSON.stringify({ vehicles: updatePayload }),
+            const response = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'reorderVehicles',
+                    payload: { vehicles: updatePayload }
+                }),
             });
             if (!response.ok) throw new Error('API call failed');
         } catch (error) {
             alert('No se pudo guardar el nuevo orden.');
+            // Revert optimistic update
             setVehicles(originalVehicles);
         }
     };
     
-    const handleDataReset = () => fetchAllData();
+    const handleAnalyticsReset = () => fetchAllData();
     const NotFoundPage = () => (
         <div className="text-center py-16"><h1 className="text-4xl font-bold text-rago-burgundy mb-4">404</h1><p>Página No Encontrada</p><a href="/" className="mt-8 inline-block px-6 py-3 font-semibold text-white bg-rago-burgundy rounded-lg">Volver al Inicio</a></div>
     );
@@ -438,6 +440,7 @@ const App: React.FC = () => {
     const isAdminPage = path.startsWith('/admin');
     const isLoginPage = pathname === '/login';
 
+    // --- ROUTING ---
     if (isLoginPage || (!isAdmin && isAdminPage)) {
         return <LoginPage onLoginSuccess={handleLoginSuccess} />;
     }
@@ -453,7 +456,7 @@ const App: React.FC = () => {
                         onEdit={handleEditVehicleClick} 
                         onDelete={handleDeleteVehicleClick} 
                         onLogout={handleLogout} 
-                        onDataReset={handleDataReset} 
+                        onAnalyticsReset={handleAnalyticsReset} 
                         onToggleFeatured={handleToggleFeatured}
                         onToggleSold={handleToggleSold}
                         onReorder={handleReorder}
@@ -472,10 +475,12 @@ const App: React.FC = () => {
         if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl}/>;
         if (isHomePage) return (
             <>
+                {/* Desktop Filter Bar */}
                 <div className="hidden md:block">
                     <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />
                 </div>
                 
+                {/* Mobile Filter Button */}
                 <div className="md:hidden mb-6">
                     <button
                         onClick={() => setIsFilterPanelOpen(true)}
@@ -552,23 +557,12 @@ const App: React.FC = () => {
                 <main id="catalog" className="container mx-auto px-4 md:px-6 py-8 flex-grow">
                      <div key={path} className="animate-fade-in">{renderPublicContent()}</div>
                 </main>
-                {isHomePage && <ReviewsSection reviews={reviews} />}
                 {isHomePage && <SellYourCarSection />}
                 <Footer />
             </div>
             {isHomePage && <ScrollToTopButton />}
 
-            {modalState.type === 'submitReview' && (
-                <SubmitReviewModal
-                    isOpen={true}
-                    onClose={handleCloseModal}
-                    onSuccess={() => {
-                        handleCloseModal();
-                        alert('¡Gracias por tu reseña! Será publicada una vez que sea aprobada.');
-                    }}
-                />
-            )}
-
+            {/* Mobile Filter Panel */}
             {isFilterPanelOpen && createPortal(
                 <div
                     className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ease-out animate-fade-in"

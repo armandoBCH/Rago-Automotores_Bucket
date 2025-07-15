@@ -2,10 +2,9 @@
 
 
 
-
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { Vehicle, AnalyticsEvent, Review, FinancingSettings, ReviewUpdate } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, MessageSquareIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ArrowUpDownIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, CogIcon, PencilRulerIcon, ChatBubbleIcon } from '../constants';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Vehicle, AnalyticsEvent } from '../types';
+import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon, GlobeIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
 import VehiclePerformanceTable from './VehiclePerformanceTable';
@@ -17,7 +16,7 @@ interface AdminPanelProps {
     onEdit: (vehicle: Vehicle) => void;
     onDelete: (vehicleId: number) => void;
     onLogout: () => void;
-    onDataReset: () => void;
+    onAnalyticsReset: () => void;
     onToggleFeatured: (vehicleId: number, currentStatus: boolean) => void;
     onToggleSold: (vehicleId: number, currentStatus: boolean) => void;
     onReorder: (reorderedVehicles: Vehicle[]) => void;
@@ -132,6 +131,7 @@ const AnalyticsChart: React.FC<{ data: { date: string; views: number }[] }> = ({
             ) : (
                 <div className="relative overflow-x-auto">
                     <svg ref={svgRef} viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="min-w-[600px]" onMouseLeave={() => setTooltip(null)}>
+                        {/* Y-axis */}
                         {Array.from({ length: yAxisTicks + 1 }).map((_, i) => {
                             const y = chartPadding.top + (i * (chartHeight - chartPadding.top - chartPadding.bottom)) / yAxisTicks;
                             const value = Math.round(maxValue * (1 - i / yAxisTicks));
@@ -143,6 +143,7 @@ const AnalyticsChart: React.FC<{ data: { date: string; views: number }[] }> = ({
                             );
                         })}
     
+                        {/* Bars and X-axis */}
                         {data.map((item, index) => {
                             const barWidth = (chartWidth - chartPadding.left - chartPadding.right) / data.length;
                             const x = chartPadding.left + index * barWidth;
@@ -179,7 +180,7 @@ const AnalyticsChart: React.FC<{ data: { date: string; views: number }[] }> = ({
     );
 };
 
-const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDataReset'>> = ({ vehicles, allEvents, onDataReset: onAnalyticsReset }) => {
+const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, allEvents, onAnalyticsReset }) => {
     const [resetAnalyticsModal, setResetAnalyticsModal] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
     const [dateRange, setDateRange] = useState<DateRange>('7d');
@@ -196,9 +197,13 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
         if (dateRange === 'all') return allEvents;
         const now = new Date();
         const daysToSubtract = dateRange === '7d' ? 7 : 30;
+        // Set hours, minutes, seconds, and ms to 0 to get the beginning of the day.
         const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract + 1);
         
-        return allEvents.filter(event => new Date(event.created_at) >= startDate);
+        return allEvents.filter(event => {
+            const eventDate = new Date(event.created_at);
+            return eventDate >= startDate;
+        });
     }, [allEvents, dateRange]);
 
 
@@ -277,23 +282,25 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
             .map(([date, data]) => ({ date, views: data.views }))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+
         return { performanceData: fullPerformanceData, kpis: siteKpis, rankings: siteRankings, keyInteractions: siteInteractions, chartData: sortedChartData };
+
     }, [vehicles, filteredEvents, dateRange, allEvents]);
 
 
     const handleResetAnalytics = async () => {
-        const password = sessionStorage.getItem('rago-admin-pass');
-        if (!password) {
-            alert('Error de autenticación. Por favor, inicie sesión de nuevo.');
-            return;
-        }
+        const password = prompt("Para confirmar, por favor ingrese la contraseña de administrador:");
+        if (!password) return;
 
         setIsResetting(true);
         try {
-            const response = await fetch('/api/analytics', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
-                body: JSON.stringify({}), // No password needed in body
+            const response = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'resetAnalytics',
+                    payload: { password }
+                }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al reiniciar las estadísticas.');
@@ -318,8 +325,10 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
                 </div>
             </div>
 
+            {/* Chart */}
             <AnalyticsChart data={chartData} />
 
+            {/* KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <KeyMetricCard title="Vistas de Página" value={kpis.totalPageViews} icon={<GlobeIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
                 <KeyMetricCard title="Vistas a Detalles" value={kpis.totalDetailViews} icon={<EyeIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
@@ -328,6 +337,7 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
                 <KeyMetricCard title="Favoritos (Neto)" value={kpis.totalFavorites} icon={<HeartIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
             </div>
 
+            {/* Rankings */}
             <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Rankings de Vehículos</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -337,10 +347,12 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
                 </div>
             </div>
             
+            {/* Full Performance Table */}
             <div>
                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Rendimiento Detallado</h2>
                  <VehiclePerformanceTable performanceData={performanceData} />
             </div>
+
 
             <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Generales</h2>
@@ -379,7 +391,7 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
 };
 
 
-const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onDataReset'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
+const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onAnalyticsReset' | 'onToggleAcceptsTradeIn'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [movePopover, setMovePopover] = useState<{ vehicleId: number | null; anchorEl: HTMLElement | null }>({ vehicleId: null, anchorEl: null });
     const [newPositionInput, setNewPositionInput] = useState('');
@@ -617,206 +629,16 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'onDataReset'>
     );
 };
 
-const ReviewsView: React.FC<{ onDataReset: () => void; }> = ({ onDataReset }) => {
-    const [reviews, setReviews] = useState<Review[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [editingReview, setEditingReview] = useState<Review | null>(null);
-
-    const fetchReviews = useCallback(async () => {
-        setLoading(true);
-        const password = sessionStorage.getItem('rago-admin-pass'); // Assume password stored for session
-        try {
-            const response = await fetch('/api/reviews', {
-                headers: { 'x-admin-password': password || '' }
-            });
-            if (response.ok) {
-                setReviews(await response.json());
-            } else {
-                console.error("Failed to fetch reviews");
-            }
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchReviews();
-    }, [fetchReviews]);
-    
-    const handleUpdate = async (id: number, updateData: Partial<ReviewUpdate>) => {
-        const password = sessionStorage.getItem('rago-admin-pass');
-        try {
-            const response = await fetch('/api/reviews', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-admin-password': password || '' },
-                body: JSON.stringify({ id, ...updateData })
-            });
-            if (!response.ok) throw new Error('Failed to update review');
-            fetchReviews();
-            setEditingReview(null);
-        } catch (error) {
-            alert(`Error: ${(error as Error).message}`);
-        }
-    };
-    
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Estás seguro de que quieres eliminar esta reseña?')) return;
-        const password = sessionStorage.getItem('rago-admin-pass');
-        try {
-            const response = await fetch('/api/reviews', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json', 'x-admin-password': password || '' },
-                body: JSON.stringify({ id })
-            });
-            if (!response.ok) throw new Error('Failed to delete review');
-            fetchReviews();
-        } catch (error) {
-             alert(`Error: ${(error as Error).message}`);
-        }
-    };
-
-    if (loading) return <div>Cargando reseñas...</div>;
-
-    return (
-        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fade-in">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-6">Gestión de Reseñas</h2>
-            <div className="overflow-x-auto">
-                <table className="w-full text-base text-left text-slate-600 dark:text-slate-300">
-                    <thead className="text-sm text-slate-700 uppercase bg-slate-100 dark:bg-slate-700/50 dark:text-slate-400">
-                        <tr>
-                            <th className="p-4">Cliente</th>
-                            <th className="p-4">Calificación</th>
-                            <th className="p-4">Reseña</th>
-                            <th className="p-4 text-center">Aprobado</th>
-                            <th className="p-4 text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {reviews.map(review => (
-                            <tr key={review.id} className="border-b dark:border-slate-700">
-                                <td className="p-4 font-semibold">{review.customer_name}</td>
-                                <td className="p-4"><div className="flex">{"★".repeat(review.rating)}{"☆".repeat(5-review.rating)}</div></td>
-                                <td className="p-4 max-w-sm">
-                                    {editingReview?.id === review.id ? (
-                                        <textarea
-                                            defaultValue={review.review_text || ''}
-                                            onBlur={(e) => handleUpdate(review.id, { review_text: e.target.value })}
-                                            className="w-full p-2 rounded bg-slate-100 dark:bg-slate-700"
-                                            rows={3}
-                                        />
-                                    ) : (
-                                        <>
-                                            <p className="font-bold">{review.title}</p>
-                                            <p className="text-slate-500">{review.review_text}</p>
-                                        </>
-                                    )}
-                                </td>
-                                <td className="p-4 text-center">
-                                    <button onClick={() => handleUpdate(review.id, { is_approved: !review.is_approved })} className={`px-3 py-1 text-sm font-semibold rounded-full ${review.is_approved ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {review.is_approved ? 'Sí' : 'No'}
-                                    </button>
-                                </td>
-                                <td className="p-4 text-right">
-                                    <button onClick={() => setEditingReview(review)} className="p-2 text-slate-500 hover:text-blue-500"><EditIcon/></button>
-                                    <button onClick={() => handleDelete(review.id)} className="p-2 text-slate-500 hover:text-red-500"><TrashIcon/></button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-
-const SettingsView: React.FC = () => {
-    const [settings, setSettings] = useState<FinancingSettings>({ interestRate: 3, maxAmount: 5000000, maxTerm: 12 });
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const response = await fetch('/api/settings?key=financing');
-                if (response.ok) {
-                    setSettings(await response.json() as FinancingSettings);
-                } else if (response.status === 404) {
-                    // Settings not found, use defaults. This is fine.
-                } else {
-                    throw new Error("Failed to fetch settings");
-                }
-            } catch (error) {
-                console.error(error);
-                alert("No se pudo cargar la configuración.");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchSettings();
-    }, []);
-
-    const handleSave = async () => {
-        setSaving(true);
-        const password = sessionStorage.getItem('rago-admin-pass');
-        try {
-            const response = await fetch('/api/settings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-admin-password': password || '' },
-                body: JSON.stringify({ key: 'financing', value: settings })
-            });
-            if (!response.ok) throw new Error('Failed to save settings');
-            alert('Configuración guardada con éxito.');
-        } catch (error) {
-            alert(`Error al guardar: ${(error as Error).message}`);
-        } finally {
-            setSaving(false);
-        }
-    };
-    
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setSettings(prev => ({ ...prev, [name]: parseFloat(value) }));
-    };
-
-    if (loading) return <div>Cargando configuración...</div>;
-
-    return (
-        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 animate-fade-in">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-6">Configuración de Financiación</h2>
-            <div className="space-y-4 max-w-lg">
-                 <div>
-                    <label htmlFor="interestRate" className="block text-base font-medium text-gray-700 dark:text-gray-300">Tasa de Interés (%)</label>
-                    <input type="number" name="interestRate" id="interestRate" value={settings.interestRate} onChange={handleChange} className="mt-1 form-input" />
-                </div>
-                 <div>
-                    <label htmlFor="maxTerm" className="block text-base font-medium text-gray-700 dark:text-gray-300">Plazo Máximo (meses)</label>
-                    <input type="number" name="maxTerm" id="maxTerm" value={settings.maxTerm} onChange={handleChange} className="mt-1 form-input" />
-                </div>
-                 <div>
-                    <label htmlFor="maxAmount" className="block text-base font-medium text-gray-700 dark:text-gray-300">Monto Máximo a Financiar (ARS)</label>
-                    <input type="number" name="maxAmount" id="maxAmount" value={settings.maxAmount} onChange={handleChange} className="mt-1 form-input" />
-                </div>
-                <div className="pt-2">
-                    <button onClick={handleSave} disabled={saving} className="px-5 py-2.5 text-base font-semibold text-white bg-rago-burgundy rounded-lg hover:bg-rago-burgundy-darker disabled:opacity-50">
-                        {saving ? 'Guardando...' : 'Guardar Cambios'}
-                    </button>
-                </div>
-            </div>
-            <style>{`.form-input{display:block;width:100%;padding:0.5rem 0.75rem;background-color:#fff;border:1px solid #d1d5db;border-radius:0.375rem;box-shadow:0 1px 2px 0 rgba(0,0,0,0.05);transition:border-color .2s,box-shadow .2s;font-size:1rem;line-height:1.5rem}.dark .form-input{background-color:#1f2937;border-color:#4b5563;color:#e5e7eb}.form-input:focus{outline:0;box-shadow:0 0 0 2px rgba(108,30,39,.5);border-color:#6c1e27}`}</style>
-        </div>
-    );
-};
-
 
 export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
-    const [activeTab, setActiveTab] = useState<'inventory' | 'stats' | 'reviews' | 'settings'>('inventory');
+    const [activeTab, setActiveTab] = useState<'inventory' | 'stats'>('inventory');
 
     return (
         <div className="bg-slate-100 dark:bg-slate-900/50 p-4 sm:p-6 lg:p-8 rounded-2xl shadow-lg border border-slate-200/50 dark:border-slate-800/50 min-h-[85vh]">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Panel de Administración</h1>
-                    <p className="text-lg text-slate-500 dark:text-slate-400 mt-1">Gestioná tu inventario, analiza las estadísticas y configura la aplicación.</p>
+                    <p className="text-lg text-slate-500 dark:text-slate-400 mt-1">Gestioná tu inventario y analizá las estadísticas.</p>
                 </div>
                 <button
                     onClick={props.onLogout}
@@ -828,19 +650,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
             </div>
             
             <div className="border-b border-slate-200 dark:border-slate-700">
-                <nav className="-mb-px flex space-x-4 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
+                <nav className="-mb-px flex space-x-4 sm:space-x-6" aria-label="Tabs">
                     <TabButton name="Inventario" icon={<FileCheckIcon className="h-5 w-5 sm:h-6 sm:w-6"/>} isActive={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} />
                     <TabButton name="Estadísticas" icon={<StatsIcon className="h-5 w-5 sm:h-6 sm:w-6"/>} isActive={activeTab === 'stats'} onClick={() => setActiveTab('stats')} />
-                    <TabButton name="Reseñas" icon={<PencilRulerIcon className="h-5 w-5 sm:h-6 sm:w-6"/>} isActive={activeTab === 'reviews'} onClick={() => setActiveTab('reviews')} />
-                    <TabButton name="Configuración" icon={<CogIcon className="h-5 w-5 sm:h-6 sm:w-6"/>} isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
                 </nav>
             </div>
             
             <div className="mt-8">
                 {activeTab === 'inventory' && <InventoryView {...props} />}
                 {activeTab === 'stats' && <StatsView {...props} />}
-                {activeTab === 'reviews' && <ReviewsView onDataReset={props.onDataReset} />}
-                {activeTab === 'settings' && <SettingsView />}
             </div>
         </div>
     );

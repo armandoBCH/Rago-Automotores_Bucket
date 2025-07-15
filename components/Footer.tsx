@@ -1,8 +1,7 @@
 
 
-
 import React from 'react';
-import { LocationPinIcon, InstagramIcon, ChatBubbleIcon, ClockIcon, PencilRulerIcon } from '../constants';
+import { LocationPinIcon, InstagramIcon, ChatBubbleIcon, ClockIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 
 const Footer: React.FC = () => {
@@ -20,6 +19,7 @@ const Footer: React.FC = () => {
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-y-12 gap-x-8 py-16 lg:py-20">
                     
+                    {/* Brand Info */}
                     <div className="md:col-span-3 lg:col-span-1 flex flex-col items-center text-center md:items-start md:text-left">
                         <a href="/" aria-label="Rago Automotores Home">
                              <img src="https://i.imgur.com/zOGb0ay.jpeg" alt="Rago Automotores Logo" className="h-20 mb-5" />
@@ -29,16 +29,32 @@ const Footer: React.FC = () => {
                         </p>
                     </div>
 
+                    {/* Navegación */}
                     <div className="text-center md:text-left">
                         <h3 className="text-base font-bold text-white uppercase tracking-wider mb-5">Navegación</h3>
                         <ul className="space-y-4">
-                             <li><a href="/" className="text-slate-400 hover:text-white transition-colors duration-300">Inicio</a></li>
-                             <li><a href="/#catalog" className="text-slate-400 hover:text-white transition-colors duration-300">Catálogo</a></li>
-                             <li><a href="/#sell-car-section" className="text-slate-400 hover:text-white transition-colors duration-300">Vender mi Auto</a></li>
-                             <li><a href="#" data-modal="review" className="text-slate-400 hover:text-white transition-colors duration-300">Dejar una reseña</a></li>
+                             <li>
+                                <a href="/" className="text-slate-400 hover:text-white transition-colors duration-300">
+                                   Inicio
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/#catalog" className="text-slate-400 hover:text-white transition-colors duration-300">
+                                   Catálogo
+                                </a>
+                            </li>
+                             <li>
+                                <a 
+                                    href="/#sell-car-section"
+                                    className="text-slate-400 hover:text-white transition-colors duration-300"
+                                >
+                                   Vender mi Auto
+                                </a>
+                            </li>
                         </ul>
                     </div>
                     
+                    {/* Contacto */}
                     <div className="text-center md:text-left">
                         <h3 className="text-base font-bold text-white uppercase tracking-wider mb-5">Contacto</h3>
                         <ul className="space-y-4">
@@ -57,7 +73,8 @@ const Footer: React.FC = () => {
                         </ul>
                     </div>
 
-                     <div className="text-center md:text-left">
+                     {/* Ubicación */}
+                    <div className="text-center md:text-left">
                         <h3 className="text-base font-bold text-white uppercase tracking-wider mb-5">Ubicación</h3>
                         <ul className="space-y-4">
                             <li>
@@ -69,6 +86,7 @@ const Footer: React.FC = () => {
                         </ul>
                     </div>
                     
+                    {/* Horarios de Atención */}
                     <div className="text-center md:text-left">
                         <h3 className="text-base font-bold text-white uppercase tracking-wider mb-5">Horarios</h3>
                         <div className="inline-flex items-start text-left">

@@ -158,15 +158,6 @@ export const PlayIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-export const PencilRulerIcon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="m15 5 4 4"/>
-        <path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/>
-        <path d="m8 6 2-2"/>
-        <path d="m2 22 5.5-1.5L21.17 6.83a2.82 2.82 0 0 0-4-4L2.5 16.5Z"/>
-    </svg>
-);
-
 
 // Icons for Footer
 export const LocationPinIcon = ({ className }: { className?: string }) => (
@@ -208,15 +199,6 @@ export const CircleDollarSignIcon = ({ className }: { className?: string }) => (
 export const ClockIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-    </svg>
-);
-
-export const CalculatorIcon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
-        <line x1="8" y1="6" x2="16" y2="6"></line>
-        <line x1="12" y1="10" x2="12" y2="18"></line>
-        <line x1="8" y1="14" x2="16" y2="14"></line>
     </svg>
 );
 
