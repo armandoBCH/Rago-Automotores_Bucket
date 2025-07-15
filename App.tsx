@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
@@ -95,6 +96,15 @@ const App: React.FC = () => {
     useEffect(() => {
         fetchAllData();
     }, [fetchAllData]);
+    
+    useEffect(() => {
+        const isAdminPage = path.startsWith('/admin');
+        const isLoginPage = path === '/login';
+
+        if (!isAdminPage && !isLoginPage) {
+            trackEvent('page_view');
+        }
+    }, [path]);
 
     // Reset search when navigating from a detail page back to home.
     useEffect(() => {

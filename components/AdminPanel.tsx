@@ -1,8 +1,9 @@
 
 
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon } from '../constants';
+import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon, GlobeIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
 import VehiclePerformanceTable from './VehiclePerformanceTable';
@@ -32,20 +33,6 @@ const TabButton: React.FC<{ name: string; icon: React.ReactNode; isActive: boole
         {icon}
         {name}
     </button>
-);
-
-const InteractionCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
-    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-5">
-            <div className="bg-rago-burgundy/10 text-rago-burgundy p-4 rounded-lg">
-                {icon}
-            </div>
-            <div>
-                <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">{value}</p>
-                <p className="text-base text-slate-500 dark:text-slate-400 mt-1">{title}</p>
-            </div>
-        </div>
-    </div>
 );
 
 const KeyMetricCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
@@ -92,11 +79,134 @@ const RankingList: React.FC<{ title: string; data: { vehicle: Vehicle; value: nu
     </div>
 );
 
+type DateRange = '7d' | '30d' | 'all';
+const DateRangeButton: React.FC<{ label: string; range: DateRange; activeRange: DateRange; onClick: (range: DateRange) => void; }> = ({ label, range, activeRange, onClick }) => {
+    const isActive = range === activeRange;
+    return (
+        <button
+            onClick={() => onClick(range)}
+            className={`px-4 py-2 text-sm sm:text-base font-semibold rounded-lg transition-colors duration-200 ${isActive ? 'bg-rago-burgundy text-white shadow-md' : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'}`}
+        >
+            {label}
+        </button>
+    );
+};
+
+const AnalyticsChart: React.FC<{ data: { date: string; views: number }[] }> = ({ data }) => {
+    const svgRef = useRef<SVGSVGElement>(null);
+    const [tooltip, setTooltip] = useState<{ x: number, y: number, date: string, views: number } | null>(null);
+
+    const chartHeight = 250;
+    const chartPadding = { top: 20, right: 20, bottom: 50, left: 50 };
+    const chartWidth = 800;
+
+    const maxValue = Math.max(...data.map(d => d.views), 1);
+    const yAxisTicks = 5;
+    
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString + 'T00:00:00'); // Ensure it's parsed as local time
+        return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+    };
+    
+    const handleMouseMove = (e: React.MouseEvent<SVGRectElement>, index: number) => {
+        if (!svgRef.current) return;
+        const rect = svgRef.current.getBoundingClientRect();
+        const barData = data[index];
+        setTooltip({
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+            date: barData.date,
+            views: barData.views,
+        });
+    };
+
+    return (
+        <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-800 relative">
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Actividad Diaria (Vistas)</h3>
+            {data.length === 0 ? (
+                 <div className="flex items-center justify-center h-[300px] text-slate-500">
+                    No hay datos de actividad para este período.
+                </div>
+            ) : (
+                <div className="relative overflow-x-auto">
+                    <svg ref={svgRef} viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="min-w-[600px]" onMouseLeave={() => setTooltip(null)}>
+                        {/* Y-axis */}
+                        {Array.from({ length: yAxisTicks + 1 }).map((_, i) => {
+                            const y = chartPadding.top + (i * (chartHeight - chartPadding.top - chartPadding.bottom)) / yAxisTicks;
+                            const value = Math.round(maxValue * (1 - i / yAxisTicks));
+                            return (
+                                <g key={`y-axis-${i}`}>
+                                    <line x1={chartPadding.left} y1={y} x2={chartWidth - chartPadding.right} y2={y} stroke="currentColor" className="text-slate-200 dark:text-slate-700/50" />
+                                    <text x={chartPadding.left - 8} y={y + 4} textAnchor="end" className="text-xs fill-slate-500 dark:fill-slate-400">{value}</text>
+                                </g>
+                            );
+                        })}
+    
+                        {/* Bars and X-axis */}
+                        {data.map((item, index) => {
+                            const barWidth = (chartWidth - chartPadding.left - chartPadding.right) / data.length;
+                            const x = chartPadding.left + index * barWidth;
+                            const barHeight = Math.max(0, (item.views / maxValue) * (chartHeight - chartPadding.top - chartPadding.bottom));
+                            const y = chartHeight - chartPadding.bottom - barHeight;
+                            
+                            return (
+                                <g key={item.date}>
+                                    <rect
+                                        x={x + barWidth * 0.1}
+                                        y={y}
+                                        width={barWidth * 0.8}
+                                        height={barHeight}
+                                        className="fill-rago-burgundy/60 hover:fill-rago-burgundy transition-colors"
+                                        onMouseMove={(e) => handleMouseMove(e, index)}
+                                        onMouseLeave={() => setTooltip(null)}
+                                    />
+                                    <text x={x + barWidth / 2} y={chartHeight - chartPadding.bottom + 15} textAnchor="middle" className="text-xs fill-slate-500 dark:fill-slate-400">
+                                        {formatDate(item.date)}
+                                    </text>
+                                </g>
+                            );
+                        })}
+                    </svg>
+                    {tooltip && (
+                        <div className="absolute p-2 text-sm bg-slate-900 dark:bg-slate-800 text-white rounded-md shadow-lg pointer-events-none" style={{ top: tooltip.y - 50, left: tooltip.x + 10 }}>
+                           <p className="font-bold">{new Date(tooltip.date + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                           <p>{tooltip.views} {tooltip.views === 1 ? 'vista' : 'vistas'}</p>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAnalyticsReset'>> = ({ vehicles, allEvents, onAnalyticsReset }) => {
     const [resetAnalyticsModal, setResetAnalyticsModal] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
+    const [dateRange, setDateRange] = useState<DateRange>('7d');
+    
+    const dateRangeLabel = useMemo(() => {
+        switch (dateRange) {
+            case '7d': return 'Últimos 7 días';
+            case '30d': return 'Últimos 30 días';
+            case 'all': return 'Historial completo';
+        }
+    }, [dateRange]);
 
-    const { performanceData, kpis, rankings, keyInteractions } = useMemo(() => {
+    const filteredEvents = useMemo(() => {
+        if (dateRange === 'all') return allEvents;
+        const now = new Date();
+        const daysToSubtract = dateRange === '7d' ? 7 : 30;
+        // Set hours, minutes, seconds, and ms to 0 to get the beginning of the day.
+        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract + 1);
+        
+        return allEvents.filter(event => {
+            const eventDate = new Date(event.created_at);
+            return eventDate >= startDate;
+        });
+    }, [allEvents, dateRange]);
+
+
+    const { performanceData, kpis, rankings, keyInteractions, chartData } = useMemo(() => {
         const vehicleMap = new Map(vehicles.map(v => [v.id, v]));
         const performanceMap = new Map<number, { views: number; contacts: number; shares: number; favorites: number; cardClicks: number }>();
 
@@ -104,7 +214,19 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
             performanceMap.set(v.id, { views: 0, contacts: 0, shares: 0, favorites: 0, cardClicks: 0 });
         });
 
-        allEvents.forEach(event => {
+        const dailyActivity = new Map<string, { views: number }>();
+        
+        if (dateRange !== 'all') {
+            const days = dateRange === '7d' ? 7 : 30;
+            for (let i = 0; i < days; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateString = d.toISOString().split('T')[0];
+                dailyActivity.set(dateString, { views: 0 });
+            }
+        }
+
+        filteredEvents.forEach(event => {
             if (event.vehicle_id && performanceMap.has(event.vehicle_id)) {
                 const stats = performanceMap.get(event.vehicle_id)!;
                 switch (event.event_type) {
@@ -115,6 +237,15 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
                     case 'click_card_details': stats.cardClicks++; break;
                 }
             }
+
+            if(event.event_type === 'view_vehicle_detail') {
+                 const dateString = new Date(event.created_at).toISOString().split('T')[0];
+                 if (dailyActivity.has(dateString)) {
+                     dailyActivity.get(dateString)!.views++;
+                 } else if (dateRange === 'all') {
+                     dailyActivity.set(dateString, { views: 1 });
+                 }
+            }
         });
 
         const fullPerformanceData = Array.from(performanceMap.entries()).map(([id, stats]) => {
@@ -123,15 +254,15 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
                 vehicle,
                 ...stats,
                 contactRate: stats.views > 0 ? (stats.contacts / stats.views) * 100 : 0,
-                ctr: stats.cardClicks > 0 ? (stats.views / stats.cardClicks) * 100 : 0 // Simplified CTR
             };
         });
 
         const siteKpis = {
+            totalPageViews: filteredEvents.filter(e => e.event_type === 'page_view').length,
             totalDetailViews: fullPerformanceData.reduce((acc, p) => acc + p.views, 0),
             totalCardClicks: fullPerformanceData.reduce((acc, p) => acc + p.cardClicks, 0),
             totalContacts: fullPerformanceData.reduce((acc, p) => acc + p.contacts, 0),
-            totalFavorites: fullPerformanceData.reduce((acc, p) => acc + p.favorites, 0),
+            totalFavorites: allEvents.filter(e => e.event_type === 'favorite_add').length - allEvents.filter(e => e.event_type === 'favorite_remove').length,
         };
         
         const siteRankings = {
@@ -141,14 +272,19 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
         };
         
         const siteInteractions = {
-            sellCarViews: allEvents.filter(e => e.event_type === 'view_sell_your_car').length,
-            sellCarInterest: allEvents.filter(e => e.event_type === 'click_whatsapp_sell').length,
-            generalContacts: allEvents.filter(e => e.event_type === 'click_whatsapp_general').length,
+            sellCarViews: filteredEvents.filter(e => e.event_type === 'view_sell_your_car').length,
+            sellCarInterest: filteredEvents.filter(e => e.event_type === 'click_whatsapp_sell').length,
+            generalContacts: filteredEvents.filter(e => e.event_type === 'click_whatsapp_general').length,
         };
 
-        return { performanceData: fullPerformanceData, kpis: siteKpis, rankings: siteRankings, keyInteractions: siteInteractions };
+        const sortedChartData = Array.from(dailyActivity.entries())
+            .map(([date, data]) => ({ date, views: data.views }))
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    }, [vehicles, allEvents]);
+
+        return { performanceData: fullPerformanceData, kpis: siteKpis, rankings: siteRankings, keyInteractions: siteInteractions, chartData: sortedChartData };
+
+    }, [vehicles, filteredEvents, dateRange, allEvents]);
 
 
     const handleResetAnalytics = async () => {
@@ -176,12 +312,25 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
     
     return (
         <div className="space-y-10 animate-fade-in">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Mostrando estadísticas: <span className="text-rago-burgundy">{dateRangeLabel}</span></h2>
+                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl">
+                    <DateRangeButton label="7 días" range="7d" activeRange={dateRange} onClick={setDateRange} />
+                    <DateRangeButton label="30 días" range="30d" activeRange={dateRange} onClick={setDateRange} />
+                    <DateRangeButton label="Todo" range="all" activeRange={dateRange} onClick={setDateRange} />
+                </div>
+            </div>
+
+            {/* Chart */}
+            <AnalyticsChart data={chartData} />
+
             {/* KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <KeyMetricCard title="Vistas de Página" value={kpis.totalPageViews} icon={<GlobeIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
                 <KeyMetricCard title="Vistas a Detalles" value={kpis.totalDetailViews} icon={<EyeIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
                 <KeyMetricCard title="Clics a Detalles" value={kpis.totalCardClicks} icon={<MousePointerClickIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
                 <KeyMetricCard title="Contactos WhatsApp" value={kpis.totalContacts} icon={<MessageSquareIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
-                <KeyMetricCard title="Guardados en Favoritos" value={kpis.totalFavorites} icon={<HeartIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
+                <KeyMetricCard title="Favoritos (Neto)" value={kpis.totalFavorites} icon={<HeartIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
             </div>
 
             {/* Rankings */}
@@ -203,20 +352,20 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onAn
 
             <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">Interacciones Generales</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <InteractionCard title="Vistas 'Vender mi Auto'" value={keyInteractions.sellCarViews} icon={<CircleDollarSignIcon className="h-8 w-8" />} />
-                    <InteractionCard title="Interés en Vender" value={keyInteractions.sellCarInterest} icon={<FileCheckIcon className="h-8 w-8" />} />
-                    <InteractionCard title="Contactos Generales" value={keyInteractions.generalContacts} icon={<ChatBubbleIcon className="h-8 w-8" />} />
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <KeyMetricCard title="Vistas 'Vender mi Auto'" value={keyInteractions.sellCarViews} icon={<CircleDollarSignIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
+                    <KeyMetricCard title="Interés en Vender" value={keyInteractions.sellCarInterest} icon={<FileCheckIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
+                    <KeyMetricCard title="Contactos Generales" value={keyInteractions.generalContacts} icon={<ChatBubbleIcon className="h-7 w-7 sm:h-8 sm:w-8" />} />
                 </div>
             </div>
              
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 p-6 rounded-2xl">
                 <h3 className="text-xl font-bold text-red-800 dark:text-red-300">Zona de Peligro</h3>
-                <p className="mt-1 text-red-600 dark:text-red-400">Esta acción es irreversible. Proceda con precaución.</p>
+                <p className="mt-1 text-red-600 dark:text-red-400">Esta acción es irreversible y reiniciará TODO el historial de estadísticas.</p>
                 <div className="mt-4">
                     <button
                         onClick={() => setResetAnalyticsModal(true)}
-                        className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                        className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 dark:focus:ring-offset-slate-900 focus:ring-red-600"
                     >
                         Reiniciar Estadísticas
                     </button>
