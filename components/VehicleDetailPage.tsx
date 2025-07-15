@@ -1,22 +1,23 @@
 
+
+
+
 import React, { useMemo, useEffect, useRef, useState } from 'react';
-import { Vehicle, Review, FinancingSettings } from '../types';
+import { Vehicle, FinancingSettings } from '../types';
 import ImageCarousel from './ImageCarousel';
 import VehicleCard from './VehicleCard';
 import SocialShareButtons from './SocialShareButtons';
 import DescriptionCard from './DescriptionCard';
-import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon, CarIcon, ArrowUpDownIcon, SteeringWheelIcon } from '../constants';
+import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon, CarIcon, ArrowUpDownIcon, CalculatorIcon, CheckIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 import { optimizeUrl, slugify } from '../utils/image';
 import { useFavorites } from './FavoritesProvider';
-import FinancingCalculator from './FinancingCalculator';
-import ReviewsSection from './ReviewsSection';
+import FinancingCalculatorModal from './FinancingCalculatorModal';
 import TestDriveModal from './TestDriveModal';
 
 interface VehicleDetailPageProps {
     vehicle: Vehicle;
     allVehicles: Vehicle[];
-    financingSettings: FinancingSettings | null;
     onPlayVideo: (url: string) => void;
 }
 
@@ -46,7 +47,14 @@ const Breadcrumb: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
     </div>
 );
 
-const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppClick: () => void, onTestDriveClick: () => void }> = ({ vehicle, whatsappLink, onWhatsAppClick, onTestDriveClick }) => {
+const PriceCard: React.FC<{ vehicle: Vehicle; onFinancingClick: () => void; onTestDriveClick: () => void; }> = ({ vehicle, onFinancingClick, onTestDriveClick }) => {
+    const contactMessage = `Hola, estoy interesado en el ${vehicle.make} ${vehicle.model}.`;
+    const whatsappLink = `https://wa.me/5492284635692?text=${encodeURIComponent(contactMessage)}`;
+
+    const handleWhatsAppClick = () => {
+        trackEvent('click_whatsapp_vehicle', vehicle.id);
+    };
+
     return (
         <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-4 sm:p-6 shadow-subtle dark:shadow-subtle-dark">
             <div className="flex justify-between items-center gap-x-4 border-b dark:border-gray-700 pb-4 mb-6 flex-wrap">
@@ -65,11 +73,15 @@ const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppCl
                 </p>
             </div>
             {!vehicle.is_sold && (
-                <div className="mb-6 -mt-2 p-3 text-center rounded-xl bg-sky-100 text-sky-800 dark:bg-sky-900/50 dark:text-sky-300 border border-sky-200 dark:border-sky-700/50">
-                    <p className="font-bold text-base sm:text-lg flex items-center justify-center gap-2 whitespace-nowrap">
-                        <ArrowUpDownIcon className="h-5 w-5" />
-                        <span>¡Aceptamos tu usado en parte de pago!</span>
-                    </p>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                    <button onClick={onFinancingClick} className="flex items-center justify-center gap-2 w-full px-4 py-3 text-base font-bold text-rago-burgundy bg-rago-burgundy/10 rounded-lg hover:bg-rago-burgundy/20 transition-colors">
+                        <CalculatorIcon className="h-5 w-5" />
+                        <span>Calcular Financiación</span>
+                    </button>
+                    <button onClick={onTestDriveClick} className="flex items-center justify-center gap-2 w-full px-4 py-3 text-base font-bold text-rago-burgundy bg-rago-burgundy/10 rounded-lg hover:bg-rago-burgundy/20 transition-colors">
+                        <CheckIcon className="h-5 w-5" />
+                        <span>Solicitar Test Drive</span>
+                    </button>
                 </div>
             )}
             {vehicle.is_sold ? (
@@ -77,25 +89,16 @@ const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppCl
                     Vehículo Vendido
                 </div>
             ) : (
-                <div className="space-y-3">
-                     <button
-                        onClick={onTestDriveClick}
-                        className="group w-full flex items-center justify-center gap-3 text-center bg-slate-800 hover:bg-slate-950 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-lg sm:text-xl transform hover:-translate-y-0.5"
-                    >
-                        <SteeringWheelIcon className="h-7 w-7 transition-transform duration-300 group-hover:rotate-[-15deg]" />
-                        <span>Agendar Prueba de Manejo</span>
-                    </button>
-                    <a
-                        href={whatsappLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={onWhatsAppClick}
-                        className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-lg sm:text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
-                    >
-                        <ChatBubbleIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
-                        <span>Contactar por WhatsApp</span>
-                    </a>
-                </div>
+                <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleWhatsAppClick}
+                    className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-lg sm:text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
+                >
+                    <ChatBubbleIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                    <span>Contactar por WhatsApp</span>
+                </a>
             )}
             <SocialShareButtons vehicle={vehicle} />
         </div>
@@ -118,15 +121,29 @@ const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: st
 );
 
 
-const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, financingSettings, onPlayVideo }) => {
+const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, onPlayVideo }) => {
     const similarVehiclesRef = useRef<HTMLDivElement>(null);
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
     const isCurrentlyFavorite = isFavorite(vehicle.id);
-    const [isTestDriveModalOpen, setIsTestDriveModalOpen] = useState(false);
+    const [financingModalOpen, setFinancingModalOpen] = useState(false);
+    const [testDriveModalOpen, setTestDriveModalOpen] = useState(false);
+    const [financingSettings, setFinancingSettings] = useState<FinancingSettings | null>(null);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch('/api/settings?key=financing');
+                if (response.ok) setFinancingSettings(await response.json());
+            } catch (error) {
+                console.error("Could not fetch financing settings", error);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const handleFavoriteClick = (e: React.MouseEvent) => {
         e.preventDefault();
-        e.stopPropagation(); // Prevent any underlying click events
+        e.stopPropagation();
         if (isCurrentlyFavorite) {
             removeFavorite(vehicle.id);
         } else {
@@ -137,7 +154,6 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
     useEffect(() => {
         trackEvent('view_vehicle_detail', vehicle.id);
         
-        // Add Vehicle JSON-LD structured data
         const schema = {
             '@context': 'https://schema.org',
             '@type': 'Vehicle',
@@ -145,34 +161,20 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
             'url': window.location.href,
             'image': vehicle.images.map(img => optimizeUrl(img, { w: 1200, h: 800, fit: 'cover' })),
             'description': vehicle.description,
-            'brand': {
-                '@type': 'Brand',
-                'name': vehicle.make
-            },
+            'brand': { '@type': 'Brand', 'name': vehicle.make },
             'model': vehicle.model,
             'vehicleCategory': vehicle.vehicle_type,
             'vehicleModelDate': String(vehicle.year),
-            'mileageFromOdometer': {
-                '@type': 'QuantitativeValue',
-                'value': vehicle.mileage,
-                'unitCode': 'KMT'
-            },
+            'mileageFromOdometer': { '@type': 'QuantitativeValue', 'value': vehicle.mileage, 'unitCode': 'KMT' },
             'fuelType': vehicle.fuel_type,
-            'vehicleEngine': {
-                '@type': 'EngineSpecification',
-                'name': vehicle.engine
-            },
+            'vehicleEngine': { '@type': 'EngineSpecification', 'name': vehicle.engine },
             'vehicleTransmission': vehicle.transmission,
             'offers': {
                 '@type': 'Offer',
                 'price': vehicle.price,
                 'priceCurrency': 'ARS',
                 'availability': vehicle.is_sold ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
-                'seller': {
-                    '@type': 'AutoDealer',
-                    'name': 'Rago Automotores',
-                    'url': window.location.origin
-                }
+                'seller': { '@type': 'AutoDealer', 'name': 'Rago Automotores', 'url': window.location.origin }
             }
         };
 
@@ -180,25 +182,11 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
         script.type = 'application/ld+json';
         script.id = 'vehicle-json-ld';
         script.innerHTML = JSON.stringify(schema);
-
-        const existingScript = document.getElementById('vehicle-json-ld');
-        if (existingScript) {
-            existingScript.remove();
-        }
+        document.head.querySelector('#vehicle-json-ld')?.remove();
         document.head.appendChild(script);
 
-        return () => {
-            document.getElementById('vehicle-json-ld')?.remove();
-        };
-
+        return () => { document.getElementById('vehicle-json-ld')?.remove(); };
     }, [vehicle]);
-
-    const handleWhatsAppClick = () => {
-        trackEvent('click_whatsapp_vehicle', vehicle.id);
-    };
-
-    const contactMessage = `Hola, estoy interesado en el ${vehicle.make} ${vehicle.model}.`;
-    const whatsappLink = `https://wa.me/5492284635692?text=${encodeURIComponent(contactMessage)}`;
 
     const specs = [
         { icon: <ShieldIcon className="h-6 w-6"/>, label: "Marca", value: vehicle.make },
@@ -213,53 +201,34 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
     
     const relatedVehicles = useMemo(() => {
         if (!allVehicles || allVehicles.length <= 1) return [];
-
-        const availableVehicles = allVehicles.filter(v => !v.is_sold);
-
+        const availableVehicles = allVehicles.filter(v => !v.is_sold && v.id !== vehicle.id);
         const priceRangeVehicles = availableVehicles.filter(v => {
-            if (v.id === vehicle.id) return false;
             if (vehicle.price === 0) return false;
             const priceDiff = Math.abs(v.price - vehicle.price) / vehicle.price;
             return priceDiff <= 0.25;
         });
-
-        const sameMake = availableVehicles.filter(v => v.id !== vehicle.id && v.make === vehicle.make);
-        
+        const sameMake = availableVehicles.filter(v => v.make === vehicle.make);
         const combined = [...priceRangeVehicles, ...sameMake];
         const uniqueIds = new Set();
-        const uniqueVehicles = combined.filter(v => {
-            if (uniqueIds.has(v.id)) {
-                return false;
-            }
-            uniqueIds.add(v.id);
-            return true;
-        });
-
-        return uniqueVehicles.slice(0, 8);
+        return combined.filter(v => !uniqueIds.has(v.id) && uniqueIds.add(v.id)).slice(0, 8);
     }, [vehicle, allVehicles]);
 
     const scrollSimilarVehicles = (direction: 'left' | 'right') => {
         if (similarVehiclesRef.current) {
             const scrollAmount = similarVehiclesRef.current.clientWidth * 0.9;
-            similarVehiclesRef.current.scrollBy({
-                left: direction === 'left' ? -scrollAmount : scrollAmount,
-                behavior: 'smooth',
-            });
+            similarVehiclesRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
         }
     };
 
     return (
+        <>
         <div className="max-w-screen-xl mx-auto">
-            {isTestDriveModalOpen && <TestDriveModal isOpen={true} onClose={() => setIsTestDriveModalOpen(false)} vehicle={vehicle} />}
             <div className="hidden lg:block mb-8 opacity-0 animate-fade-in-up">
                 <Breadcrumb vehicle={vehicle} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 lg:gap-x-12">
-                
-                {/* --- Left Column: Image & Description --- */}
                 <div className="lg:col-span-3 flex flex-col gap-y-8">
-                    {/* Image Carousel */}
                     <div className="opacity-0 animate-fade-in-up">
                         <div className="-mx-4 md:-mx-6 lg:mx-0">
                             <div className="relative overflow-hidden lg:rounded-2xl lg:shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
@@ -287,36 +256,25 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                         </div>
                     </div>
 
-                    {/* Content for Mobile */}
                     <div className="lg:hidden space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-                        <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} onTestDriveClick={() => setIsTestDriveModalOpen(true)} />
+                        <PriceCard vehicle={vehicle} onFinancingClick={() => setFinancingModalOpen(true)} onTestDriveClick={() => setTestDriveModalOpen(true)} />
                         <SpecsCard specs={specs} />
-                        {!vehicle.is_sold && financingSettings && <FinancingCalculator vehiclePrice={vehicle.price} settings={financingSettings} />}
                         <DescriptionCard description={vehicle.description} />
                     </div>
                     
-                    {/* Description & Finance for Desktop */}
-                    <div className="hidden lg:block space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
+                    <div className="hidden lg:block opacity-0 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
                         <DescriptionCard description={vehicle.description} />
-                        {!vehicle.is_sold && financingSettings && <FinancingCalculator vehiclePrice={vehicle.price} settings={financingSettings} />}
                     </div>
                 </div>
 
-                {/* --- Right Column (Sticky on Desktop) --- */}
                 <div className="hidden lg:block lg:col-span-2">
                     <div className="lg:sticky lg:top-28 space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-                        <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} onTestDriveClick={() => setIsTestDriveModalOpen(true)} />
+                        <PriceCard vehicle={vehicle} onFinancingClick={() => setFinancingModalOpen(true)} onTestDriveClick={() => setTestDriveModalOpen(true)} />
                         <SpecsCard specs={specs} />
                     </div>
                 </div>
             </div>
-            
-            {/* Reviews Section */}
-            <div className="mt-12 lg:mt-16 opacity-0 animate-fade-in-up" style={{ animationDelay: '350ms' }}>
-                 <ReviewsSection vehicle={vehicle} />
-            </div>
 
-            {/* Similar Vehicles Section */}
             {relatedVehicles.length > 0 && (
                 <section className="mt-12 lg:mt-16">
                      <div className="relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-8 shadow-xl border border-slate-200 dark:border-slate-800">
@@ -357,6 +315,22 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                 </section>
             )}
         </div>
+        {financingModalOpen && financingSettings && (
+            <FinancingCalculatorModal 
+                isOpen={financingModalOpen}
+                onClose={() => setFinancingModalOpen(false)}
+                vehiclePrice={vehicle.price}
+                settings={financingSettings}
+            />
+        )}
+        {testDriveModalOpen && (
+            <TestDriveModal
+                isOpen={testDriveModalOpen}
+                onClose={() => setTestDriveModalOpen(false)}
+                vehicle={vehicle}
+            />
+        )}
+        </>
     );
 };
 

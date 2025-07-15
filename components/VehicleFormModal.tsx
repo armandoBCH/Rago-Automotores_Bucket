@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Vehicle, VehicleFormData } from '../types';
 import { XIcon } from '../constants';
@@ -15,7 +16,7 @@ type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'create
     price: string;
     mileage: string;
     fuel_type: string;
-    custom_fuel_type?: string;
+    customFuelType?: string;
     customMake?: string;
     customVehicleType?: string;
     video_url: string;
@@ -23,7 +24,7 @@ type FormDataState = Omit<Vehicle, 'id' | 'year' | 'price' | 'mileage' | 'create
 
 const getInitialFormState = (): FormDataState => ({
     make: '', model: '', year: '', price: '', mileage: '', engine: '',
-    transmission: 'Manual', fuel_type: 'Nafta', vehicle_type: '', custom_fuel_type: '', customMake: '', customVehicleType: '', description: '',
+    transmission: 'Manual', fuel_type: 'Nafta', vehicle_type: '', customFuelType: '', customMake: '', customVehicleType: '', description: '',
     is_featured: false, is_sold: false, video_url: '',
 });
 
@@ -49,10 +50,9 @@ interface VehicleFormModalProps {
     onSubmit: (vehicle: VehicleFormData) => void;
     initialData?: Vehicle;
     brands: string[];
-    authHeaders: Record<string, string>;
 }
 
-const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, onSubmit, initialData, brands, authHeaders }) => {
+const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, onSubmit, initialData, brands }) => {
     const [formData, setFormData] = useState<FormDataState>(getInitialFormState());
     const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
     const [previewMode, setPreviewMode] = useState<'card' | 'detail'>('card');
@@ -92,7 +92,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                     price: String(initialData.price),
                     mileage: String(initialData.mileage),
                     fuel_type: isStandardFuel ? initialData.fuel_type : 'Otro',
-                    custom_fuel_type: isStandardFuel ? '' : initialData.fuel_type,
+                    customFuelType: isStandardFuel ? '' : initialData.fuel_type,
                     make: isStandardMake ? initialData.make : 'Otro',
                     customMake: isStandardMake ? '' : initialData.make,
                     vehicle_type: isStandardVehicleType ? initialData.vehicle_type : 'Otro',
@@ -141,7 +141,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             mileage: parseInt(formData.mileage) || 0,
             engine: formData.engine || 'Motor',
             transmission: formData.transmission,
-            fuel_type: isOtherFuelType ? formData.custom_fuel_type || 'Combustible' : formData.fuel_type,
+            fuel_type: isOtherFuelType ? formData.customFuelType || 'Combustible' : formData.fuel_type,
             vehicle_type: isOtherVehicleType ? formData.customVehicleType || 'Tipo' : formData.vehicle_type || 'Tipo',
             description: formData.description || 'Descripción del vehículo.',
             images: validImages.length > 0 ? validImages : ['https://i.imgur.com/g2a4A0a.png'],
@@ -197,20 +197,13 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             try {
                 const compressedFile = await compressImage(imageFile.file);
                 
-                const signedUrlResponse = await fetch('/api/vehicles', {
+                const signedUrlResponse = await fetch('/api/create-signed-upload-url', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders },
-                    body: JSON.stringify({
-                        action: 'get-upload-url',
-                        fileName: compressedFile.name,
-                        fileType: compressedFile.type
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileName: compressedFile.name, fileType: compressedFile.type }),
                 });
 
-                if (!signedUrlResponse.ok) {
-                     if (signedUrlResponse.status === 401) onClose(); // Token invalid, close modal
-                    throw new Error('Failed to get signed URL info.');
-                }
+                if (!signedUrlResponse.ok) throw new Error('Failed to get signed URL info.');
                 const { token, path } = await signedUrlResponse.json();
 
                 const { error: uploadError } = await supabase.storage.from('vehicle-images').uploadToSignedUrl(path, token, compressedFile);
@@ -222,6 +215,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                 return publicUrl;
             } catch (error) {
                 console.error('Error uploading image:', error);
+                // Optionally mark the file as failed in the UI
                 return null;
             }
         });
@@ -231,7 +225,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
         const existingUrls = imageFiles.filter(f => f.url && !f.file).map(f => f.url);
         const finalImageUrls = [...existingUrls, ...uploadedUrls];
 
-        const fuel_type = isOtherFuelType ? formData.custom_fuel_type?.trim() : formData.fuel_type;
+        const fuel_type = isOtherFuelType ? formData.customFuelType?.trim() : formData.fuel_type;
         if (isOtherFuelType && !fuel_type) {
             alert("Por favor, especifique el tipo de combustible.");
             setIsSubmitting(false);
@@ -252,6 +246,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             return;
         }
 
+
         const vehicleToSubmit: VehicleFormData = {
             ...(initialData?.id && { id: initialData.id }),
             make: make || 'N/A',
@@ -271,6 +266,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
         };
 
         onSubmit(vehicleToSubmit);
+        // Clear draft after successful submit
         if (!initialData) {
             localStorage.removeItem(DRAFT_STORAGE_KEY);
         }
@@ -338,7 +334,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                                 <InputField label="Motor" name="engine" value={formData.engine} onChange={handleChange} required />
                                 <div><label htmlFor="transmission" className="block text-base font-medium text-gray-700 dark:text-gray-300">Transmisión</label><select id="transmission" name="transmission" value={formData.transmission} onChange={handleChange} className="mt-1 form-input"><option>Manual</option><option>Automática</option></select></div>
                                  <div><label htmlFor="fuel_type" className="block text-base font-medium text-gray-700 dark:text-gray-300">Tipo de Combustible</label><select id="fuel_type" name="fuel_type" value={formData.fuel_type} onChange={handleChange} className="mt-1 form-input"><option>Nafta</option><option>Diesel</option><option>GNC</option><option value="Otro">Otro</option></select></div>
-                                {isOtherFuelType && <div><label htmlFor="custom_fuel_type" className="block text-base font-medium text-gray-700 dark:text-gray-300">Especificar Combustible</label><input id="custom_fuel_type" name="custom_fuel_type" type="text" value={formData.custom_fuel_type || ''} onChange={handleChange} required={isOtherFuelType} className="mt-1 form-input" placeholder="Ej: Eléctrico"/></div>}
+                                {isOtherFuelType && <div><label htmlFor="customFuelType" className="block text-base font-medium text-gray-700 dark:text-gray-300">Especificar Combustible</label><input id="customFuelType" name="customFuelType" type="text" value={formData.customFuelType || ''} onChange={handleChange} required={isOtherFuelType} className="mt-1 form-input" placeholder="Ej: Eléctrico"/></div>}
                             </div>
                             <div>
                                 <InputField label="URL de Video (Opcional)" name="video_url" type="url" value={formData.video_url || ''} onChange={handleChange} placeholder="https://youtube.com/shorts/... o video de Cloudinary" />

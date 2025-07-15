@@ -3,8 +3,8 @@ export type Json =
   | number
   | boolean
   | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+  | { [key: string]: any }
+  | any[]
 
 export type Database = {
   public: {
@@ -30,60 +30,51 @@ export type Database = {
         }
         Relationships: []
       }
-      financing_settings: {
-        Row: {
-          id: number
-          max_amount: number
-          max_installments: number
-          interest_rate: number
-          updated_at: string
-        }
-        Insert: {
-          id?: number
-          max_amount: number
-          max_installments: number
-          interest_rate: number
-          updated_at?: string
-        }
-        Update: {
-          id?: number
-          max_amount?: number
-          max_installments?: number
-          interest_rate?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       reviews: {
         Row: {
           id: number
           created_at: string
-          vehicle_id: number
-          author_name: string
+          customer_name: string
           rating: number
-          comment: string
+          review_text: string | null
           is_approved: boolean
-          admin_reply: string | null
+          title: string | null
         }
         Insert: {
           id?: number
           created_at?: string
-          vehicle_id: number
-          author_name: string
+          customer_name: string
           rating: number
-          comment: string
+          review_text?: string | null
           is_approved?: boolean
-          admin_reply?: string | null
+          title?: string | null
         }
         Update: {
           id?: number
           created_at?: string
-          vehicle_id?: number
-          author_name?: string
+          customer_name?: string
           rating?: number
-          comment?: string
+          review_text?: string | null
           is_approved?: boolean
-          admin_reply?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          id: number
+          key: string
+          value: Json
+        }
+        Insert: {
+          id?: number
+          key: string
+          value: Json
+        }
+        Update: {
+          id?: number
+          key?: string
+          value?: Json
         }
         Relationships: []
       }

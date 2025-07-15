@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-    onLoginSuccess: (token: string) => void;
+    onLoginSuccess: () => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
@@ -22,7 +21,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         };
 
         try {
-            const response = await fetch('/api/auth', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -33,7 +32,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             const data = await response.json();
 
             if (response.ok) {
-                onLoginSuccess(data.token);
+                sessionStorage.setItem('rago-admin-pass', password);
+                onLoginSuccess();
             } else {
                 setError(data.message || 'Ocurrió un error. Inténtalo de nuevo.');
                 applyErrorAnimation();

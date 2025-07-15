@@ -1,4 +1,5 @@
 
+
 import { Vehicle } from './types';
 
 export const SearchIcon = ({ className }: { className?: string }) => (
@@ -157,6 +158,15 @@ export const PlayIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+export const PencilRulerIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="m15 5 4 4"/>
+        <path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/>
+        <path d="m8 6 2-2"/>
+        <path d="m2 22 5.5-1.5L21.17 6.83a2.82 2.82 0 0 0-4-4L2.5 16.5Z"/>
+    </svg>
+);
+
 
 // Icons for Footer
 export const LocationPinIcon = ({ className }: { className?: string }) => (
@@ -198,6 +208,15 @@ export const CircleDollarSignIcon = ({ className }: { className?: string }) => (
 export const ClockIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+);
+
+export const CalculatorIcon = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+        <line x1="8" y1="6" x2="16" y2="6"></line>
+        <line x1="12" y1="10" x2="12" y2="18"></line>
+        <line x1="8" y1="14" x2="16" y2="14"></line>
     </svg>
 );
 
@@ -314,47 +333,5 @@ export const GlobeIcon = ({ className }: { className?: string }) => (
         <circle cx="12" cy="12" r="10"/>
         <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
         <path d="M2 12h20"/>
-    </svg>
-);
-
-// New Feature Icons
-export const CalculatorIcon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <rect x="4" y="2" width="16" height="20" rx="2" />
-        <line x1="8" x2="16" y1="6" y2="6" />
-        <line x1="12" x2="12" y1="10" y2="18" />
-        <line x1="8" x2="16" y1="14" y2="14" />
-    </svg>
-);
-
-export const SteeringWheelIcon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <circle cx="12" cy="12" r="10" />
-        <circle cx="12" cy="12" r="3" />
-        <line x1="12" y1="2" x2="12" y2="9" />
-        <line x1="12" y1="15" x2="12" y2="22" />
-        <line x1="2" y1="12" x2="9" y2="12" />
-        <line x1="15" y1="12" x2="22" y2="12" />
-    </svg>
-);
-
-export const ReviewIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M12 20h9" />
-    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    <path d="m15 5 3 3" />
-  </svg>
-);
-
-export const MessageCircleIcon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-    </svg>
-);
-
-export const SettingsIcon = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-        <circle cx="12" cy="12" r="3"/>
     </svg>
 );

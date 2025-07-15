@@ -1,6 +1,7 @@
 
 
 
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
@@ -12,7 +13,7 @@ export default async function handler(
   // Set CORS headers
   response.setHeader('Access-Control-Allow-Origin', '*'); // In production, restrict this to your domain
   response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-admin-password');
 
   // Handle CORS preflight requests
   if (request.method === 'OPTIONS') {
@@ -24,6 +25,11 @@ export default async function handler(
   }
 
   try {
+    // Security check: only admins should be able to get an upload URL
+    if (request.headers['x-admin-password'] !== process.env.ADMIN_PASSWORD) {
+        return response.status(401).json({ message: 'Unauthorized' });
+    }
+
     const { fileName, fileType } = request.body;
     if (!fileName || !fileType) {
         return response.status(400).json({ message: 'fileName and fileType are required.' });
@@ -36,9 +42,6 @@ export default async function handler(
         return response.status(500).json({ message: 'Supabase server configuration is incomplete.' });
     }
     
-    // In a real app, you'd want to validate the user's session here
-    // to ensure only authenticated admins can get upload URLs.
-
     const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
     // Sanitize file name to prevent path traversal or other attacks

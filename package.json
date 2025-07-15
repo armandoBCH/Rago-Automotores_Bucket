@@ -1,5 +1,5 @@
 {
-  "name": "proyecto-rago",
+  "name": "backup-proyecto-rago",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,9 +12,8 @@
     "react-dom": "^19.1.0",
     "react": "^19.1.0",
     "@supabase/supabase-js": "^2.50.4",
-    "@vercel/node": "^5.3.4",
     "react-dropzone": "^14.3.8",
-    "crypto": "^1.0.1"
+    "@vercel/node": "^5.3.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
