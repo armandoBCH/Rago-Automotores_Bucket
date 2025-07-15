@@ -29,15 +29,7 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       vehicles: {
         Row: {
@@ -50,7 +42,7 @@ export type Database = {
           mileage: number
           engine: string
           transmission: 'Automática' | 'Manual'
-          fuelType: string
+          fuel_type: string
           vehicle_type: string
           description: string
           images: string[]
@@ -69,7 +61,7 @@ export type Database = {
           mileage: number
           engine: string
           transmission: 'Automática' | 'Manual'
-          fuelType: string
+          fuel_type: string
           vehicle_type: string
           description: string
           images: string[]
@@ -88,7 +80,7 @@ export type Database = {
           mileage?: number
           engine?: string
           transmission?: 'Automática' | 'Manual'
-          fuelType?: string
+          fuel_type?: string
           vehicle_type?: string
           description?: string
           images?: string[]

@@ -144,7 +144,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                 'value': vehicle.mileage,
                 'unitCode': 'KMT'
             },
-            'fuelType': vehicle.fuelType,
+            'fuelType': vehicle.fuel_type,
             'vehicleEngine': {
                 '@type': 'EngineSpecification',
                 'name': vehicle.engine
@@ -195,7 +195,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
         { icon: <GaugeIcon className="h-6 w-6"/>, label: "Kilometraje", value: `${vehicle.mileage.toLocaleString('es-AR')} km` },
         { icon: <CogIcon className="h-6 w-6"/>, label: "Motor", value: vehicle.engine },
         { icon: <SlidersIcon className="h-6 w-6"/>, label: "Transmisión", value: vehicle.transmission },
-        { icon: <GasPumpIcon className="h-6 w-6"/>, label: "Combustible", value: vehicle.fuelType },
+        { icon: <GasPumpIcon className="h-6 w-6"/>, label: "Combustible", value: vehicle.fuel_type },
     ];
     
     const relatedVehicles = useMemo(() => {

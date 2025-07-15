@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
@@ -64,7 +66,7 @@ const App: React.FC = () => {
             // Fetch vehicles always, now sorted by the new custom order field
             const vehiclesResult = await supabase
                 .from('vehicles')
-                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
+                .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuel_type,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
                 .order('display_order', { ascending: true })
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
@@ -291,7 +293,7 @@ const App: React.FC = () => {
             // Filter vehicles, ensuring every search word is present
             temp = temp.filter(v => {
                 // Combine all searchable fields into one string for easier searching
-                const vehicleString = `${v.make} ${v.model} ${v.year} ${v.description} ${v.engine} ${v.transmission} ${v.fuelType} ${v.vehicle_type}`.toLowerCase();
+                const vehicleString = `${v.make} ${v.model} ${v.year} ${v.description} ${v.engine} ${v.transmission} ${v.fuel_type} ${v.vehicle_type}`.toLowerCase();
                 return searchWords.every(word => vehicleString.includes(word));
             });
         }
