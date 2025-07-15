@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate, Review } from './types';
@@ -70,8 +67,7 @@ const App: React.FC = () => {
                 .from('vehicles')
                 .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuel_type,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
                 .order('is_sold', { ascending: true })
-                .order('display_order', { ascending: true })
-                .order('created_at', { ascending: false });
+                .order('display_order', { ascending: true });
             
             if (vehiclesResult.error) throw vehiclesResult.error;
             setVehicles(vehiclesResult.data || []);
