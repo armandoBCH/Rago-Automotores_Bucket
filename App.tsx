@@ -1,10 +1,11 @@
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate, Review } from './types';
 import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, SlidersIcon, XIcon, PencilRulerIcon, CogIcon } from './constants';
-import { supabase } from './lib/supabaseClient';
+import { getSupabaseClient } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
 import { optimizeUrl } from './utils/image';
 import Header from './components/Header';
@@ -63,6 +64,7 @@ const App: React.FC = () => {
         setLoading(true);
         setDbError(null);
         try {
+            const supabase = await getSupabaseClient();
             const vehiclesResult = await supabase
                 .from('vehicles')
                 .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuel_type,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')

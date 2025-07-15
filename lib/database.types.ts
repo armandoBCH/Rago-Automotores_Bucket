@@ -28,14 +28,7 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       reviews: {
         Row: {

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Vehicle, VehicleFormData } from '../types';
 import { XIcon } from '../constants';
@@ -7,7 +8,7 @@ import VehicleCard from './VehicleCard';
 import ImageCarousel from './ImageCarousel';
 import ImageUploader, { ImageFile } from './ImageUploader';
 import { compressImage } from '../utils/image';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 
 const DRAFT_STORAGE_KEY = 'rago-new-vehicle-draft';
 
@@ -190,6 +191,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             return;
         }
 
+        const supabase = await getSupabaseClient();
         setSubmitProgress({ total: newFilesToUpload.length, completed: 0 });
 
         const uploadPromises = newFilesToUpload.map(async (imageFile) => {
