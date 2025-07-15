@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { Vehicle, FinancingSettings } from '../types';
 import ImageCarousel from './ImageCarousel';
@@ -133,7 +134,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
         const fetchSettings = async () => {
             try {
                 const response = await fetch('/api/settings?key=financing');
-                if (response.ok) setFinancingSettings(await response.json());
+                if (response.ok) setFinancingSettings(await response.json() as FinancingSettings);
             } catch (error) {
                 console.error("Could not fetch financing settings", error);
             }

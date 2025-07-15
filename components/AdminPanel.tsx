@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { Vehicle, AnalyticsEvent, Review, FinancingSettings, ReviewUpdate } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, MessageSquareIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ArrowUpDownIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, CogIcon, PencilRulerIcon, ChatBubbleIcon } from '../constants';
@@ -738,7 +739,7 @@ const SettingsView: React.FC = () => {
             try {
                 const response = await fetch('/api/settings?key=financing');
                 if (response.ok) {
-                    setSettings(await response.json());
+                    setSettings(await response.json() as FinancingSettings);
                 } else if (response.status === 404) {
                     // Settings not found, use defaults. This is fine.
                 } else {
