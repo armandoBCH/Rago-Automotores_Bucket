@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 
 interface LoginPageProps {
-    onLoginSuccess: () => void;
+    onLoginSuccess: (token: string) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
@@ -21,7 +22,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         };
 
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api/auth', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -32,7 +33,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             const data = await response.json();
 
             if (response.ok) {
-                onLoginSuccess();
+                onLoginSuccess(data.token);
             } else {
                 setError(data.message || 'Ocurrió un error. Inténtalo de nuevo.');
                 applyErrorAnimation();

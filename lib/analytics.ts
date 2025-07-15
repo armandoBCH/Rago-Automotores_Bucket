@@ -20,7 +20,7 @@ export const trackEvent = (eventType: string, vehicleId?: number): void => {
     }
 
     // Send the event to our secure API endpoint instead of directly to Supabase
-    fetch('/api/track-event', {
+    fetch('/api/analytics', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

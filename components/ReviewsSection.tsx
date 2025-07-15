@@ -23,7 +23,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ vehicle }) => {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch(`/api/get-reviews?vehicle_id=${vehicle.id}`);
+                const response = await fetch(`/api/reviews?vehicle_id=${vehicle.id}`);
                 if (!response.ok) throw new Error('Could not fetch reviews.');
                 const data = await response.json();
                 setReviews(data.reviews || []);
@@ -59,7 +59,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ vehicle }) => {
         };
 
         try {
-            const response = await fetch('/api/submit-review', {
+            const response = await fetch('/api/reviews', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(reviewData),

@@ -86,14 +86,7 @@ export type Database = {
           is_approved?: boolean
           admin_reply?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       vehicles: {
         Row: {

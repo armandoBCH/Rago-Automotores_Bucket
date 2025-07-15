@@ -1,8 +1,8 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Vehicle, AnalyticsEvent, FinancingSettings, Review, ReviewUpdate } from '../types';
-import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, MessageSquareIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, SettingsIcon, ReviewIcon, MessageCircleIcon, ChatBubbleIcon } from '../constants';
+import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, MessageSquareIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, SettingsIcon, ReviewIcon, MessageCircleIcon as AdminReplyIcon, ChatBubbleIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
 import VehiclePerformanceTable from './VehiclePerformanceTable';
@@ -20,6 +20,7 @@ interface AdminPanelProps {
     onToggleFeatured: (vehicleId: number, currentStatus: boolean) => void;
     onToggleSold: (vehicleId: number, currentStatus: boolean) => void;
     onReorder: (reorderedVehicles: Vehicle[]) => void;
+    authHeaders: Record<string, string>;
 }
 
 const TabButton: React.FC<{ name: string; icon: React.ReactNode; isActive: boolean; onClick: () => void }> = ({ name, icon, isActive, onClick }) => (
@@ -35,9 +36,6 @@ const TabButton: React.FC<{ name: string; icon: React.ReactNode; isActive: boole
         {name}
     </button>
 );
-
-// ... (Existing components like KeyMetricCard, RankItem, RankingList, etc. from original file) ...
-// The user did not provide the full AdminPanel code so I will recreate what I assume was there.
 
 const KeyMetricCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; }> = ({ title, value, icon }) => (
     <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-700">
@@ -183,9 +181,7 @@ const AnalyticsChart: React.FC<{ data: { date: string; views: number }[] }> = ({
     );
 };
 
-// ... (StatsView and InventoryView from original, but with modifications below)
-
-const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDataRefresh'>> = ({ vehicles, allEvents, onDataRefresh }) => {
+const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDataRefresh' | 'onLogout' | 'authHeaders'>> = ({ vehicles, allEvents, onDataRefresh, onLogout, authHeaders }) => {
     const [resetAnalyticsModal, setResetAnalyticsModal] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
     const [dateRange, setDateRange] = useState<DateRange>('7d');
@@ -289,16 +285,13 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
 
 
     const handleResetAnalytics = async () => {
-        const password = prompt("Para confirmar, por favor ingrese la contraseña de administrador:");
-        if (!password) return;
-
         setIsResetting(true);
         try {
-            const response = await fetch('/api/reset-analytics', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password }),
+            const response = await fetch('/api/analytics', {
+                method: 'DELETE',
+                headers: authHeaders,
             });
+            if (response.status === 401) return onLogout();
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al reiniciar las estadísticas.');
             alert('Estadísticas reiniciadas con éxito.');
@@ -375,7 +368,7 @@ const StatsView: React.FC<Pick<AdminPanelProps, 'vehicles' | 'allEvents' | 'onDa
     );
 };
 
-const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'financingSettings' | 'onDataRefresh'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
+const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'financingSettings' | 'onDataRefresh' | 'authHeaders'>> = ({ vehicles, onAdd, onEdit, onDelete, onToggleFeatured, onToggleSold, onReorder }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [movePopover, setMovePopover] = useState<{ vehicleId: number | null; anchorEl: HTMLElement | null }>({ vehicleId: null, anchorEl: null });
     const [newPositionInput, setNewPositionInput] = useState('');
@@ -546,7 +539,7 @@ const InventoryView: React.FC<Omit<AdminPanelProps, 'allEvents' | 'financingSett
     );
 };
 
-const SettingsView: React.FC<Pick<AdminPanelProps, 'financingSettings' | 'onDataRefresh'>> = ({ financingSettings, onDataRefresh }) => {
+const SettingsView: React.FC<Pick<AdminPanelProps, 'financingSettings' | 'onDataRefresh' | 'onLogout' | 'authHeaders'>> = ({ financingSettings, onDataRefresh, onLogout, authHeaders }) => {
     const [settings, setSettings] = useState(financingSettings);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -561,20 +554,20 @@ const SettingsView: React.FC<Pick<AdminPanelProps, 'financingSettings' | 'onData
     };
 
     const handleSave = async () => {
-        const password = prompt("Para confirmar, por favor ingrese la contraseña de administrador:");
-        if (!password || !settings) return;
+        if (!settings) return;
         
         setIsSaving(true);
         try {
-            const response = await fetch('/api/save-financing-settings', {
+            const response = await fetch('/api/settings', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password, settings: {
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                body: JSON.stringify({ settings: {
                     max_amount: settings.max_amount,
                     max_installments: settings.max_installments,
                     interest_rate: settings.interest_rate,
                 } }),
             });
+            if (response.status === 401) return onLogout();
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al guardar.');
             alert('Configuración guardada con éxito.');
@@ -617,17 +610,18 @@ const SettingsView: React.FC<Pick<AdminPanelProps, 'financingSettings' | 'onData
     )
 }
 
-const ReviewsView: React.FC<{vehicles: Vehicle[], onDataRefresh: () => void}> = ({ vehicles, onDataRefresh }) => {
+const ReviewsView: React.FC<{vehicles: Vehicle[], onDataRefresh: () => void, onLogout: () => void, authHeaders: Record<string, string>}> = ({ vehicles, onDataRefresh, onLogout, authHeaders }) => {
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingReview, setEditingReview] = useState<Review | null>(null);
 
     const vehicleMap = useMemo(() => new Map(vehicles.map(v => [v.id, v])), [vehicles]);
     
-    const fetchReviews = async () => {
+    const fetchReviews = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/get-all-reviews');
+            const response = await fetch('/api/reviews?admin=true', { headers: authHeaders });
+            if (response.status === 401) return onLogout();
             if(!response.ok) throw new Error("Failed to fetch reviews");
             const data = await response.json();
             setReviews(data.reviews || []);
@@ -637,19 +631,20 @@ const ReviewsView: React.FC<{vehicles: Vehicle[], onDataRefresh: () => void}> = 
         } finally {
             setLoading(false);
         }
-    }
+    }, [authHeaders, onLogout]);
 
     useEffect(() => {
         fetchReviews();
-    }, []);
+    }, [fetchReviews]);
 
     const handleUpdate = async (reviewId: number, update: ReviewUpdate) => {
         try {
-            const response = await fetch('/api/manage-review', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const response = await fetch('/api/reviews', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify({ reviewId, update }),
             });
+            if (response.status === 401) return onLogout();
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al actualizar.');
             fetchReviews();
@@ -659,9 +654,21 @@ const ReviewsView: React.FC<{vehicles: Vehicle[], onDataRefresh: () => void}> = 
         }
     };
     
-    const handleDelete = (reviewId: number) => {
+    const handleDelete = async (reviewId: number) => {
         if(confirm("¿Estás seguro de que quieres eliminar esta reseña? Esta acción no se puede deshacer.")) {
-             handleUpdate(reviewId, { toDelete: true } as any);
+             try {
+                const response = await fetch('/api/reviews', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    body: JSON.stringify({ reviewId }),
+                });
+                if (response.status === 401) return onLogout();
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Error al eliminar.');
+                fetchReviews();
+             } catch (err: any) {
+                 alert(`Error: ${err.message}`);
+             }
         }
     }
 
@@ -783,9 +790,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = (props) => {
             
             <div className="mt-8">
                 {activeTab === 'inventory' && <InventoryView {...props} />}
-                {activeTab === 'stats' && <StatsView vehicles={props.vehicles} allEvents={props.allEvents} onDataRefresh={props.onDataRefresh} />}
-                {activeTab === 'reviews' && <ReviewsView vehicles={props.vehicles} onDataRefresh={props.onDataRefresh} />}
-                {activeTab === 'settings' && <SettingsView financingSettings={props.financingSettings} onDataRefresh={props.onDataRefresh} />}
+                {activeTab === 'stats' && <StatsView vehicles={props.vehicles} allEvents={props.allEvents} onDataRefresh={props.onDataRefresh} onLogout={props.onLogout} authHeaders={props.authHeaders} />}
+                {activeTab === 'reviews' && <ReviewsView vehicles={props.vehicles} onDataRefresh={props.onDataRefresh} onLogout={props.onLogout} authHeaders={props.authHeaders} />}
+                {activeTab === 'settings' && <SettingsView financingSettings={props.financingSettings} onDataRefresh={props.onDataRefresh} onLogout={props.onLogout} authHeaders={props.authHeaders} />}
             </div>
         </div>
     );

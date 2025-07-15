@@ -49,9 +49,10 @@ interface VehicleFormModalProps {
     onSubmit: (vehicle: VehicleFormData) => void;
     initialData?: Vehicle;
     brands: string[];
+    authHeaders: Record<string, string>;
 }
 
-const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, onSubmit, initialData, brands }) => {
+const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, onSubmit, initialData, brands, authHeaders }) => {
     const [formData, setFormData] = useState<FormDataState>(getInitialFormState());
     const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
     const [previewMode, setPreviewMode] = useState<'card' | 'detail'>('card');
@@ -196,13 +197,20 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             try {
                 const compressedFile = await compressImage(imageFile.file);
                 
-                const signedUrlResponse = await fetch('/api/create-signed-upload-url', {
+                const signedUrlResponse = await fetch('/api/vehicles', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileName: compressedFile.name, fileType: compressedFile.type }),
+                    headers: { 'Content-Type': 'application/json', ...authHeaders },
+                    body: JSON.stringify({
+                        action: 'get-upload-url',
+                        fileName: compressedFile.name,
+                        fileType: compressedFile.type
+                    }),
                 });
 
-                if (!signedUrlResponse.ok) throw new Error('Failed to get signed URL info.');
+                if (!signedUrlResponse.ok) {
+                     if (signedUrlResponse.status === 401) onClose(); // Token invalid, close modal
+                    throw new Error('Failed to get signed URL info.');
+                }
                 const { token, path } = await signedUrlResponse.json();
 
                 const { error: uploadError } = await supabase.storage.from('vehicle-images').uploadToSignedUrl(path, token, compressedFile);
@@ -214,7 +222,6 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                 return publicUrl;
             } catch (error) {
                 console.error('Error uploading image:', error);
-                // Optionally mark the file as failed in the UI
                 return null;
             }
         });
@@ -245,7 +252,6 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             return;
         }
 
-
         const vehicleToSubmit: VehicleFormData = {
             ...(initialData?.id && { id: initialData.id }),
             make: make || 'N/A',
@@ -265,7 +271,6 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
         };
 
         onSubmit(vehicleToSubmit);
-        // Clear draft after successful submit
         if (!initialData) {
             localStorage.removeItem(DRAFT_STORAGE_KEY);
         }

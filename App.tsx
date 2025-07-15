@@ -34,7 +34,8 @@ const App: React.FC = () => {
     const [financingSettings, setFinancingSettings] = useState<FinancingSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [dbError, setDbError] = useState<string | null>(null);
-    const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('rago-admin') === 'true');
+    const [authToken, setAuthToken] = useState<string | null>(() => sessionStorage.getItem('rago-admin-token'));
+    const isAdmin = !!authToken;
     const [modalState, setModalState] = useState<ModalState>({ type: 'none' });
     const [searchTerm, setSearchTerm] = useState('');
     const [filters, setFilters] = useState({ make: '', year: '', price: '', vehicleType: '' });
@@ -47,8 +48,13 @@ const App: React.FC = () => {
     const { favoriteIds } = useFavorites();
     const favoritesCount = favoriteIds.length;
     
+    const authHeaders = useMemo(() => {
+        if (!authToken) return {};
+        return { 'Authorization': `Bearer ${authToken}` };
+    }, [authToken]);
+    
     const [path, setPath] = useState(() => {
-        const currentAdminState = sessionStorage.getItem('rago-admin') === 'true';
+        const currentAdminState = !!sessionStorage.getItem('rago-admin-token');
         if (currentAdminState && window.location.pathname === '/') return '/admin';
         return window.location.pathname;
     });
@@ -66,7 +72,7 @@ const App: React.FC = () => {
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
             
-            const fetchSettings = fetch('/api/get-financing-settings').then(res => res.json());
+            const fetchSettings = fetch('/api/settings').then(res => res.json());
 
             const [vehiclesResult, settingsResult] = await Promise.all([fetchVehicles, fetchSettings]);
 
@@ -76,8 +82,9 @@ const App: React.FC = () => {
 
             // Conditionally fetch analytics only for admins
             if (isAdmin) {
-                const response = await fetch('/api/get-analytics');
+                const response = await fetch('/api/analytics', { headers: authHeaders });
                 if (!response.ok) {
+                    if (response.status === 401) handleLogout(); // Token expired or invalid
                     console.error('Could not fetch analytics:', await response.text());
                     setAnalyticsEvents([]);
                 } else {
@@ -94,7 +101,7 @@ const App: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [isAdmin]);
+    }, [isAdmin, authHeaders]);
 
     useEffect(() => {
         fetchAllData();
@@ -189,15 +196,15 @@ const App: React.FC = () => {
         return () => { document.body.style.overflow = ''; };
     }, [isMobileMenuOpen, isFilterPanelOpen]);
 
-    const handleLoginSuccess = () => {
-        sessionStorage.setItem('rago-admin', 'true');
-        setIsAdmin(true);
+    const handleLoginSuccess = (token: string) => {
+        sessionStorage.setItem('rago-admin-token', token);
+        setAuthToken(token);
         navigate('/admin');
     };
 
     const handleLogout = () => {
-        sessionStorage.removeItem('rago-admin');
-        setIsAdmin(false);
+        sessionStorage.removeItem('rago-admin-token');
+        setAuthToken(null);
         navigate('/');
     };
     
@@ -325,11 +332,12 @@ const App: React.FC = () => {
 
     const handleSaveVehicle = async (vehicleData: VehicleFormData) => {
         try {
-            const response = await fetch('/api/save-vehicle', {
+            const response = await fetch('/api/vehicles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify(vehicleData),
             });
+            if (response.status === 401) return handleLogout();
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al guardar el vehículo.');
             
@@ -342,11 +350,12 @@ const App: React.FC = () => {
     
     const handleToggleFeatured = async (vehicleId: number, currentStatus: boolean) => {
        try {
-            const response = await fetch('/api/save-vehicle', {
+            const response = await fetch('/api/vehicles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify({ id: vehicleId, is_featured: !currentStatus }),
             });
+            if (response.status === 401) return handleLogout();
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al actualizar el vehículo.');
             await fetchAllData();
@@ -362,12 +371,12 @@ const App: React.FC = () => {
                 updatePayload.is_featured = false;
             }
 
-            const response = await fetch('/api/save-vehicle', {
+            const response = await fetch('/api/vehicles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify({ id: vehicleId, ...updatePayload }),
             });
-
+            if (response.status === 401) return handleLogout();
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al actualizar el estado del vehículo.');
 
@@ -381,11 +390,12 @@ const App: React.FC = () => {
         if (modalState.type !== 'confirmDelete') return;
         setIsDeleting(true);
         try {
-            const response = await fetch('/api/delete-vehicle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const response = await fetch('/api/vehicles', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
                 body: JSON.stringify({ vehicleId: modalState.vehicleId }),
             });
+            if (response.status === 401) return handleLogout();
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || 'Error al eliminar.');
             await fetchAllData(); 
@@ -409,11 +419,12 @@ const App: React.FC = () => {
         }));
         
         try {
-            const response = await fetch('/api/reorder-vehicles', {
+            const response = await fetch('/api/vehicles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vehicles: updatePayload }),
+                headers: { 'Content-Type': 'application/json', ...authHeaders },
+                body: JSON.stringify({ action: 'reorder', vehicles: updatePayload }),
             });
+            if (response.status === 401) return handleLogout();
             if (!response.ok) throw new Error('API call failed');
         } catch (error) {
             alert('No se pudo guardar el nuevo orden.');
@@ -451,9 +462,10 @@ const App: React.FC = () => {
                         onToggleFeatured={handleToggleFeatured}
                         onToggleSold={handleToggleSold}
                         onReorder={handleReorder}
+                        authHeaders={authHeaders}
                     />
                 </main>
-                {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} />}
+                {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} authHeaders={authHeaders} />}
                 {modalState.type === 'confirmDelete' && <ConfirmationModal isOpen={true} onClose={handleCloseModal} onConfirm={confirmDelete} title="Confirmar Eliminación" message="¿Estás seguro de que quieres eliminar este vehículo? Esta acción no se puede deshacer." isConfirming={isDeleting} />}
             </div>
         );
