@@ -5,7 +5,7 @@ import { Database } from '../lib/database.types';
 import { FinancingSettingsUpdate } from '../types';
 import { getVerifiedTokenPayload } from '../lib/auth';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 const initSupabaseAdmin = () => {

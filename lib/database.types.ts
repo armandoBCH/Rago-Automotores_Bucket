@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -29,7 +28,15 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financing_settings: {
         Row: {
@@ -86,7 +93,15 @@ export type Database = {
           is_approved?: boolean
           admin_reply?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reviews_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicles: {
         Row: {
