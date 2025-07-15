@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate, Review } from './types';
@@ -69,7 +70,7 @@ const App: React.FC = () => {
                 .from('vehicles')
                 .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuel_type,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
                 .order('is_sold', { ascending: true })
-                .order('display_order', { ascending: true, nullsFirst: false })
+                .order('display_order', { ascending: true })
                 .order('created_at', { ascending: false });
             
             if (vehiclesResult.error) throw vehiclesResult.error;
@@ -83,7 +84,7 @@ const App: React.FC = () => {
             }
 
             if (isAdmin) {
-                const response = await fetch('/api/analytics');
+                const response = await fetch('/api/analytics', { headers: getAdminAuthHeaders() });
                 if (!response.ok) {
                     console.error('Could not fetch analytics:', await response.text());
                     setAnalyticsEvents([]);
@@ -211,6 +212,7 @@ const App: React.FC = () => {
 
     const handleLogout = () => {
         sessionStorage.removeItem('rago-admin');
+        sessionStorage.removeItem('rago-admin-pass');
         setIsAdmin(false);
         navigate('/');
     };
@@ -329,11 +331,23 @@ const App: React.FC = () => {
     const handleDeleteVehicleClick = (vehicleId: number) => setModalState({ type: 'confirmDelete', vehicleId });
     const handleCloseModal = () => setModalState({ type: 'none' });
 
+    const getAdminAuthHeaders = () => {
+        const password = sessionStorage.getItem('rago-admin-pass');
+        if (!password) {
+            alert('Error de autenticación. Por favor, inicie sesión de nuevo.');
+            throw new Error('Admin password not found in session storage.');
+        }
+        return {
+            'Content-Type': 'application/json',
+            'x-admin-password': password,
+        };
+    };
+
     const handleSaveVehicle = async (vehicleData: VehicleFormData) => {
         try {
             const response = await fetch('/api/vehicles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAdminAuthHeaders(),
                 body: JSON.stringify(vehicleData),
             });
             const data = await response.json();
@@ -350,7 +364,7 @@ const App: React.FC = () => {
        try {
             const response = await fetch('/api/vehicles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAdminAuthHeaders(),
                 body: JSON.stringify({ id: vehicleId, is_featured: !currentStatus }),
             });
             const data = await response.json();
@@ -370,7 +384,7 @@ const App: React.FC = () => {
 
             const response = await fetch('/api/vehicles', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAdminAuthHeaders(),
                 body: JSON.stringify({ id: vehicleId, ...updatePayload }),
             });
 
@@ -389,7 +403,7 @@ const App: React.FC = () => {
         try {
             const response = await fetch('/api/vehicles', {
                 method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAdminAuthHeaders(),
                 body: JSON.stringify({ vehicleId: modalState.vehicleId }),
             });
             const data = await response.json();
@@ -410,7 +424,7 @@ const App: React.FC = () => {
         try {
             const response = await fetch('/api/vehicles', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAdminAuthHeaders(),
                 body: JSON.stringify({ vehicles: updatePayload }),
             });
             if (!response.ok) throw new Error('API call failed');

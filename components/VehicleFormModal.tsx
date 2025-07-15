@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Vehicle, VehicleFormData } from '../types';
 import { XIcon } from '../constants';
@@ -191,6 +192,13 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
             return;
         }
 
+        const password = sessionStorage.getItem('rago-admin-pass');
+        if (newFilesToUpload.length > 0 && !password) {
+            alert('Error de autenticación. No se pueden subir imágenes. Por favor, inicie sesión de nuevo.');
+            setIsSubmitting(false);
+            return;
+        }
+
         const supabase = await getSupabaseClient();
         setSubmitProgress({ total: newFilesToUpload.length, completed: 0 });
 
@@ -201,7 +209,10 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ isOpen, onClose, on
                 
                 const signedUrlResponse = await fetch('/api/create-signed-upload-url', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-admin-password': password || ''
+                    },
                     body: JSON.stringify({ fileName: compressedFile.name, fileType: compressedFile.type }),
                 });
 

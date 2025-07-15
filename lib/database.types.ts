@@ -1,10 +1,11 @@
+
 export type Json =
   | string
   | number
   | boolean
   | null
-  | { [key: string]: unknown }
-  | unknown[]
+  | { [key: string]: any }
+  | any[]
 
 export type Database = {
   public: {
@@ -28,7 +29,14 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       reviews: {
         Row: {
@@ -88,7 +96,7 @@ export type Database = {
           price: number
           mileage: number
           engine: string
-          transmission: 'Automática' | 'Manual'
+          transmission: "Automática" | "Manual"
           fuel_type: string
           vehicle_type: string
           description: string
@@ -107,7 +115,7 @@ export type Database = {
           price: number
           mileage: number
           engine: string
-          transmission: 'Automática' | 'Manual'
+          transmission: "Automática" | "Manual"
           fuel_type: string
           vehicle_type: string
           description: string
@@ -126,7 +134,7 @@ export type Database = {
           price?: number
           mileage?: number
           engine?: string
-          transmission?: 'Automática' | 'Manual'
+          transmission?: "Automática" | "Manual"
           fuel_type?: string
           vehicle_type?: string
           description?: string
