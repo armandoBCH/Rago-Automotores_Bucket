@@ -4,9 +4,10 @@
 
 
 
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
+import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate, SiteData, Review } from './types';
 import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, SlidersIcon, XIcon } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
@@ -27,6 +28,8 @@ import FeaturedVehiclesSection from './components/FeaturedVehiclesSection';
 import FavoritesPage from './components/FavoritesPage';
 import { useFavorites } from './components/FavoritesProvider';
 import VerticalVideoPlayer from './components/VerticalVideoPlayer';
+import ReviewsSection from './components/ReviewsSection';
+import LeaveReviewPage from './components/LeaveReviewPage';
 
 type ModalState = 
     | { type: 'none' }
@@ -36,6 +39,7 @@ type ModalState =
 const App: React.FC = () => {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([]);
+    const [siteData, setSiteData] = useState<SiteData>({ reviews: [], financingConfig: { maxAmount: 5000000, maxTerm: 12, interestRate: 3 } });
     const [loading, setLoading] = useState(true);
     const [dbError, setDbError] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('rago-admin') === 'true');
@@ -63,7 +67,6 @@ const App: React.FC = () => {
         setLoading(true);
         setDbError(null);
         try {
-            // Fetch vehicles always, now sorted by the new custom order field
             const vehiclesResult = await supabase
                 .from('vehicles')
                 .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuel_type,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
@@ -73,8 +76,14 @@ const App: React.FC = () => {
             
             if (vehiclesResult.error) throw vehiclesResult.error;
             setVehicles(vehiclesResult.data || []);
+            
+            // Fetch public site data (reviews, config)
+            const siteDataRes = await fetch('/api/public');
+            if(siteDataRes.ok) {
+                const data = await siteDataRes.json();
+                setSiteData(data);
+            }
 
-            // Conditionally fetch analytics only for admins
             if (isAdmin) {
                 const response = await fetch('/api/admin');
                 if (!response.ok) {
@@ -85,7 +94,7 @@ const App: React.FC = () => {
                     setAnalyticsEvents(analyticsData);
                 }
             } else {
-                setAnalyticsEvents([]); // Not admin, ensure analytics are clear
+                setAnalyticsEvents([]);
             }
 
         } catch (err: any) {
@@ -109,7 +118,6 @@ const App: React.FC = () => {
         }
     }, [path]);
 
-    // Reset search when navigating from a detail page back to home.
     useEffect(() => {
         const wasOnDetailPage = /^\/vehiculo\//.test(previousPathRef.current);
         const isNowOnHomePage = path === '/' || path === '/index.html';
@@ -208,6 +216,7 @@ const App: React.FC = () => {
     const vehicleId = vehicleIdStr ? parseInt(vehicleIdStr, 10) : null;
     const isHomePage = pathname === '/' || pathname === '/index.html';
     const isFavoritesPage = pathname === '/favoritos';
+    const isLeaveReviewPage = pathname === '/dejar-resena';
     
     const selectedVehicle = useMemo(() => {
         if (!vehicleId || isNaN(vehicleId)) return null;
@@ -220,12 +229,10 @@ const App: React.FC = () => {
         const updateMeta = (selector: string, content: string) => head.querySelector(selector)?.setAttribute('content', content);
         const updateLink = (selector: string, href: string) => head.querySelector(selector)?.setAttribute('href', href);
         
-        // Canonical URL update for all pages
         const canonicalUrl = window.location.origin + path;
         updateLink('link[rel="canonical"]', canonicalUrl);
         updateMeta('meta[property="og:url"]', canonicalUrl);
         
-        // Remove existing structured data
         head.querySelectorAll('script[type="application/ld+json"]').forEach(tag => tag.remove());
         
         if (isHomePage) {
@@ -236,7 +243,6 @@ const App: React.FC = () => {
             const ogImageUrl = optimizeUrl('https://res.cloudinary.com/dbq5jp6jn/image/upload/v1752339636/WhatsApp_Image_2025-07-12_at_13.57.13_1_va1jyr.webp', { w: 1200, h: 630, fit: 'cover', q: 80, output: 'jpeg' });
             updateMeta('meta[property="og:image"]', ogImageUrl);
 
-            // Add Organization JSON-LD for homepage
             const orgSchema = {
                 '@context': 'https://schema.org',
                 '@type': 'AutoDealer',
@@ -277,9 +283,13 @@ const App: React.FC = () => {
             document.title = 'Mis Favoritos | Rago Automotores';
             updateMeta('meta[name="description"]', 'Vea sus vehículos guardados en Rago Automotores. Su selección personal de autos de calidad.');
             updateMeta('meta[property="og:title"]', 'Mis Vehículos Favoritos');
+        } else if (isLeaveReviewPage) {
+            document.title = 'Dejar una Reseña | Rago Automotores';
+            updateMeta('meta[name="description"]', 'Contanos tu experiencia con Rago Automotores. Tu opinión es muy valiosa para nosotros.');
+            updateMeta('meta[property="og:title"]', 'Dejar una Reseña | Rago Automotores');
         }
         
-    }, [path, selectedVehicle, isHomePage, isFavoritesPage]);
+    }, [path, selectedVehicle, isHomePage, isFavoritesPage, isLeaveReviewPage]);
 
     const uniqueBrands = useMemo(() => Array.from(new Set(vehicles.map(v => v.make))).sort(), [vehicles]);
     const uniqueVehicleTypes = useMemo(() => Array.from(new Set(vehicles.map(v => v.vehicle_type))).sort(), [vehicles]);
@@ -288,17 +298,13 @@ const App: React.FC = () => {
         let temp = [...vehicles];
         const term = searchTerm.toLowerCase().trim();
         if (term) {
-            // Split search term into individual words
             const searchWords = term.split(' ').filter(word => word.length > 0);
-            // Filter vehicles, ensuring every search word is present
             temp = temp.filter(v => {
-                // Combine all searchable fields into one string for easier searching
                 const vehicleString = `${v.make} ${v.model} ${v.year} ${v.description} ${v.engine} ${v.transmission} ${v.fuel_type} ${v.vehicle_type}`.toLowerCase();
                 return searchWords.every(word => vehicleString.includes(word));
             });
         }
         
-        // The rest of the filters apply on top of the search term filter
         if (filters.make) temp = temp.filter(v => v.make === filters.make);
         if (filters.vehicleType) temp = temp.filter(v => v.vehicle_type === filters.vehicleType);
         if (filters.year) temp = temp.filter(v => v.year >= parseInt(filters.year, 10));
@@ -434,7 +440,7 @@ const App: React.FC = () => {
         }
     };
     
-    const handleAnalyticsReset = () => fetchAllData();
+    const handleDataUpdate = () => fetchAllData();
     const NotFoundPage = () => (
         <div className="text-center py-16"><h1 className="text-4xl font-bold text-rago-burgundy mb-4">404</h1><p>Página No Encontrada</p><a href="/" className="mt-8 inline-block px-6 py-3 font-semibold text-white bg-rago-burgundy rounded-lg">Volver al Inicio</a></div>
     );
@@ -442,7 +448,6 @@ const App: React.FC = () => {
     const isAdminPage = path.startsWith('/admin');
     const isLoginPage = pathname === '/login';
 
-    // --- ROUTING ---
     if (isLoginPage || (!isAdmin && isAdminPage)) {
         return <LoginPage onLoginSuccess={handleLoginSuccess} />;
     }
@@ -453,12 +458,13 @@ const App: React.FC = () => {
                 <main className="container mx-auto px-4 md:px-6 py-8">
                     <AdminPanel 
                         vehicles={vehicles} 
-                        allEvents={analyticsEvents} 
+                        allEvents={analyticsEvents}
+                        siteData={siteData}
                         onAdd={handleAddVehicleClick} 
                         onEdit={handleEditVehicleClick} 
                         onDelete={handleDeleteVehicleClick} 
                         onLogout={handleLogout} 
-                        onAnalyticsReset={handleAnalyticsReset} 
+                        onDataUpdate={handleDataUpdate}
                         onToggleFeatured={handleToggleFeatured}
                         onToggleSold={handleToggleSold}
                         onReorder={handleReorder}
@@ -473,16 +479,15 @@ const App: React.FC = () => {
     const renderPublicContent = () => {
         if (loading) return <div className="text-center py-16">Cargando...</div>;
         if (dbError) return <div className="text-center py-16 text-red-500">{dbError}</div>;
-        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl} /> : <NotFoundPage />;
+        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl} financingConfig={siteData.financingConfig} /> : <NotFoundPage />;
         if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl}/>;
+        if (isLeaveReviewPage) return <LeaveReviewPage vehicles={vehicles} />;
         if (isHomePage) return (
             <>
-                {/* Desktop Filter Bar */}
                 <div className="hidden md:block">
                     <FilterBar filters={filters} onFilterChange={handleFilterChange} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />
                 </div>
                 
-                {/* Mobile Filter Button */}
                 <div className="md:hidden mb-6">
                     <button
                         onClick={() => setIsFilterPanelOpen(true)}
@@ -559,12 +564,12 @@ const App: React.FC = () => {
                 <main id="catalog" className="container mx-auto px-4 md:px-6 py-8 flex-grow">
                      <div key={path} className="animate-fade-in">{renderPublicContent()}</div>
                 </main>
+                {isHomePage && <ReviewsSection reviews={siteData.reviews} />}
                 {isHomePage && <SellYourCarSection />}
                 <Footer />
             </div>
             {isHomePage && <ScrollToTopButton />}
 
-            {/* Mobile Filter Panel */}
             {isFilterPanelOpen && createPortal(
                 <div
                     className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ease-out animate-fade-in"

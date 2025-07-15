@@ -31,6 +31,61 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          id: number
+          created_at: string
+          customer_name: string
+          rating: number
+          comment: string | null
+          is_visible: boolean
+          response_from_owner: string | null
+          vehicle_id: number | null
+        }
+        Insert: {
+          id?: number
+          created_at?: string
+          customer_name: string
+          rating: number
+          comment?: string | null
+          is_visible?: boolean
+          response_from_owner?: string | null
+          vehicle_id?: number | null
+        }
+        Update: {
+          id?: number
+          created_at?: string
+          customer_name?: string
+          rating?: number
+          comment?: string | null
+          is_visible?: boolean
+          response_from_owner?: string | null
+          vehicle_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      site_config: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       vehicles: {
         Row: {
           id: number

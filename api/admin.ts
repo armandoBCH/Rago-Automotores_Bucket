@@ -1,12 +1,15 @@
 
+
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
 
 type VehicleInsert = Database['public']['Tables']['vehicles']['Insert'];
+type ReviewUpdate = Database['public']['Tables']['reviews']['Update'];
+type FinancingConfig = Database['public']['Tables']['site_config']['Row']['value'];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -36,6 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const { action, payload } = req.body;
 
             switch (action) {
+                // ... existing vehicle cases
                 case 'saveVehicle': {
                     const { id, ...dataToSave } = payload as VehicleInsert;
                     let result;
@@ -44,8 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         if (error) throw error;
                         result = data;
                     } else {
-                        const { data: allOrders, error: ordersError } = await supabaseAdmin.from('vehicles').select('display_order');
-                        if (ordersError) throw ordersError;
+                        const { data: allOrders } = await supabaseAdmin.from('vehicles').select('display_order');
                         const maxOrder = (allOrders || []).reduce((max, v) => (v && typeof v.display_order === 'number' && v.display_order > max) ? v.display_order : max, -1);
                         dataToSave.display_order = maxOrder + 1;
                         if (!dataToSave.vehicle_type) dataToSave.vehicle_type = 'N/A';
@@ -60,39 +63,52 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     const { vehicleId } = payload;
                     if (!vehicleId) return res.status(400).json({ message: 'vehicleId es requerido.' });
                     
-                    // Primero, eliminar los eventos de analítica asociados para que no queden huérfanos.
-                    await supabaseAdmin
-                        .from('analytics_events')
-                        .delete()
-                        .eq('vehicle_id', vehicleId);
+                    await supabaseAdmin.from('analytics_events').delete().eq('vehicle_id', vehicleId);
+                    await supabaseAdmin.from('reviews').delete().eq('vehicle_id', vehicleId);
 
-                    // Luego, buscar el vehículo para obtener las URLs de las imágenes y eliminarlas.
                     const { data: vehicle, error: fetchError } = await supabaseAdmin.from('vehicles').select('images').eq('id', vehicleId).single();
-                    if (fetchError) {
-                        // Si el vehículo ya no existe, consideramos la operación exitosa.
-                        if (fetchError.code === 'PGRST116') return res.status(200).json({ success: true, message: 'Vehículo ya eliminado.' });
+                    if (fetchError && fetchError.code !== 'PGRST116') {
                         return res.status(404).json({ message: `Vehículo con id ${vehicleId} no encontrado.` });
                     }
 
-                    // Eliminar imágenes del storage
                     if (vehicle?.images?.length > 0) {
-                        const filePaths = vehicle.images.map((url: string) => {
-                            try {
-                                const pathParts = new URL(url).pathname.split('/vehicle-images/');
-                                return pathParts.length > 1 ? decodeURIComponent(pathParts[1]) : null;
-                            } catch (e) { return null; }
-                        }).filter((p): p is string => p !== null);
-
-                        if (filePaths.length > 0) {
-                            await supabaseAdmin.storage.from('vehicle-images').remove(filePaths);
-                        }
+                        const filePaths = vehicle.images.map((url: string) => { try { const pathParts = new URL(url).pathname.split('/vehicle-images/'); return pathParts.length > 1 ? decodeURIComponent(pathParts[1]) : null; } catch (e) { return null; } }).filter((p): p is string => p !== null);
+                        if (filePaths.length > 0) await supabaseAdmin.storage.from('vehicle-images').remove(filePaths);
                     }
 
-                    // Finalmente, eliminar el registro del vehículo.
                     const { error: deleteError } = await supabaseAdmin.from('vehicles').delete().eq('id', vehicleId);
                     if (deleteError) throw deleteError;
                     
-                    return res.status(200).json({ success: true, message: 'Vehículo, estadísticas e imágenes asociados eliminados.' });
+                    return res.status(200).json({ success: true, message: 'Vehículo y datos asociados eliminados.' });
+                }
+                
+                // New Review Cases
+                case 'get_all_reviews': {
+                    const { data, error } = await supabaseAdmin.from('reviews').select('*').order('created_at', { ascending: false });
+                    if (error) throw error;
+                    return res.status(200).json(data || []);
+                }
+                case 'update_review': {
+                    const { id, ...dataToUpdate } = payload as ReviewUpdate;
+                    if (!id) return res.status(400).json({ message: 'ID de reseña requerido.'});
+                    const { data, error } = await supabaseAdmin.from('reviews').update(dataToUpdate).eq('id', id).select().single();
+                    if (error) throw error;
+                    return res.status(200).json({ success: true, review: data });
+                }
+                case 'delete_review': {
+                    const { id } = payload;
+                    if (!id) return res.status(400).json({ message: 'ID de reseña requerido.' });
+                    const { error } = await supabaseAdmin.from('reviews').delete().eq('id', id);
+                    if (error) throw error;
+                    return res.status(200).json({ success: true, message: 'Reseña eliminada.'});
+                }
+
+                // New Config Case
+                case 'update_financing_config': {
+                    const configData = payload as FinancingConfig;
+                    const { error } = await supabaseAdmin.from('site_config').upsert({ key: 'financing', value: configData });
+                    if (error) throw error;
+                    return res.status(200).json({ success: true, message: 'Configuración guardada.' });
                 }
 
                 case 'reorderVehicles': {

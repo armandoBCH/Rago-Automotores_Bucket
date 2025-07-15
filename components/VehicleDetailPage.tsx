@@ -1,7 +1,9 @@
 
 
+
+
 import React, { useMemo, useEffect, useRef } from 'react';
-import { Vehicle } from '../types';
+import { Vehicle, FinancingConfig } from '../types';
 import ImageCarousel from './ImageCarousel';
 import VehicleCard from './VehicleCard';
 import SocialShareButtons from './SocialShareButtons';
@@ -10,11 +12,14 @@ import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, Gas
 import { trackEvent } from '../lib/analytics';
 import { optimizeUrl, slugify } from '../utils/image';
 import { useFavorites } from './FavoritesProvider';
+import FinancingCalculator from './FinancingCalculator';
+import TestDriveSection from './TestDriveSection';
 
 interface VehicleDetailPageProps {
     vehicle: Vehicle;
     allVehicles: Vehicle[];
     onPlayVideo: (url: string) => void;
+    financingConfig: FinancingConfig;
 }
 
 const SpecificationItem: React.FC<{ icon: React.ReactNode; label: string; value: string | number; }> = ({ icon, label, value }) => (
@@ -106,7 +111,7 @@ const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: st
 );
 
 
-const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, onPlayVideo }) => {
+const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, onPlayVideo, financingConfig }) => {
     const similarVehiclesRef = useRef<HTMLDivElement>(null);
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
     const isCurrentlyFavorite = isFavorite(vehicle.id);
@@ -124,7 +129,6 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
     useEffect(() => {
         trackEvent('view_vehicle_detail', vehicle.id);
         
-        // Add Vehicle JSON-LD structured data
         const schema = {
             '@context': 'https://schema.org',
             '@type': 'Vehicle',
@@ -243,9 +247,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
 
             <div className="grid grid-cols-1 lg:grid-cols-5 lg:gap-x-12">
                 
-                {/* --- Left Column: Image & Description --- */}
                 <div className="lg:col-span-3 flex flex-col gap-y-8">
-                    {/* Image Carousel */}
                     <div className="opacity-0 animate-fade-in-up">
                         <div className="-mx-4 md:-mx-6 lg:mx-0">
                             <div className="relative overflow-hidden lg:rounded-2xl lg:shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
@@ -273,29 +275,29 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                         </div>
                     </div>
 
-                    {/* Content for Mobile */}
                     <div className="lg:hidden space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
                         <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} />
+                         {!vehicle.is_sold && financingConfig && <FinancingCalculator config={financingConfig} vehiclePrice={vehicle.price} />}
+                         {!vehicle.is_sold && <TestDriveSection vehicle={vehicle} />}
                         <SpecsCard specs={specs} />
                         <DescriptionCard description={vehicle.description} />
                     </div>
                     
-                    {/* Description for Desktop */}
                     <div className="hidden lg:block opacity-0 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
                         <DescriptionCard description={vehicle.description} />
                     </div>
                 </div>
 
-                {/* --- Right Column (Sticky on Desktop) --- */}
                 <div className="hidden lg:block lg:col-span-2">
                     <div className="lg:sticky lg:top-28 space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
                         <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} />
+                         {!vehicle.is_sold && financingConfig && <FinancingCalculator config={financingConfig} vehiclePrice={vehicle.price} />}
+                         {!vehicle.is_sold && <TestDriveSection vehicle={vehicle} />}
                         <SpecsCard specs={specs} />
                     </div>
                 </div>
             </div>
 
-            {/* Similar Vehicles Section */}
             {relatedVehicles.length > 0 && (
                 <section className="mt-12 lg:mt-16">
                      <div className="relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-6 md:p-8 shadow-xl border border-slate-200 dark:border-slate-800">

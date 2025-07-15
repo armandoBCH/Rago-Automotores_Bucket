@@ -8,6 +8,20 @@ export type VehicleUpdate = Database['public']['Tables']['vehicles']['Update'];
 export type AnalyticsEvent = Database['public']['Tables']['analytics_events']['Row'];
 export type AnalyticsEventInsert = Database['public']['Tables']['analytics_events']['Insert'];
 
+export type Review = Database['public']['Tables']['reviews']['Row'];
+export type ReviewInsert = Database['public']['Tables']['reviews']['Insert'];
+export type ReviewUpdate = Database['public']['Tables']['reviews']['Update'];
+
+export type FinancingConfig = {
+    maxAmount: number;
+    maxTerm: number;
+    interestRate: number; // monthly percentage
+};
+
+export type SiteData = {
+    reviews: Review[];
+    financingConfig: FinancingConfig;
+};
 
 // Type for the form data. It's based on the Insert type from Supabase,
 // which already defines `id` as optional, fitting both creation and editing scenarios.
