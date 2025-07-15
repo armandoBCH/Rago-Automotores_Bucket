@@ -5,13 +5,14 @@ import ImageCarousel from './ImageCarousel';
 import VehicleCard from './VehicleCard';
 import SocialShareButtons from './SocialShareButtons';
 import DescriptionCard from './DescriptionCard';
-import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon, CarIcon, ArrowUpDownIcon } from '../constants';
+import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, CarIcon, ArrowUpDownIcon, CalculatorIcon, SteeringWheelIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 import { optimizeUrl } from '../utils/image';
 import { useFavorites } from './FavoritesProvider';
 import FinancingCalculator from './FinancingCalculator';
 import TestDriveSection from './TestDriveSection';
 import VehicleReviews from './VehicleReviews';
+import ActionModal from './ActionModal';
 
 interface VehicleDetailPageProps {
     vehicle: Vehicle;
@@ -46,11 +47,11 @@ const Breadcrumb: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
 );
 
 const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: string | number }[] }> = ({ specs }) => (
-     <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-subtle dark:shadow-subtle-dark overflow-hidden border border-gray-200 dark:border-gray-800">
-        <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Especificaciones</h3>
+     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-subtle dark:shadow-subtle-dark overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div className="border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Especificaciones</h3>
         </div>
-        <div className="p-4 sm:p-6 divide-y divide-gray-200 dark:divide-gray-800">
+        <div className="p-4 sm:p-6 divide-y divide-slate-200 dark:divide-slate-800">
              {specs.map((spec) => (
                 <SpecificationItem key={spec.label} icon={spec.icon} label={spec.label} value={spec.value} />
             ))}
@@ -60,23 +61,12 @@ const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: st
 
 const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, onPlayVideo, financingConfig, reviews }) => {
     const similarVehiclesRef = useRef<HTMLDivElement>(null);
-    const { addFavorite, removeFavorite, isFavorite } = useFavorites();
-    const isCurrentlyFavorite = isFavorite(vehicle.id);
+    const [modalContent, setModalContent] = useState<'financing' | 'test-drive' | null>(null);
 
     const vehicleReviews = useMemo(() => {
         if (!reviews) return [];
         return reviews.filter(r => r.vehicle_id === vehicle.id && r.is_visible === true);
     }, [reviews, vehicle.id]);
-
-    const handleFavoriteClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation(); 
-        if (isCurrentlyFavorite) {
-            removeFavorite(vehicle.id);
-        } else {
-            addFavorite(vehicle.id);
-        }
-    };
 
     useEffect(() => {
         trackEvent('view_vehicle_detail', vehicle.id);
@@ -142,9 +132,6 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
 
     const contactMessage = `Hola, estoy interesado en el ${vehicle.make} ${vehicle.model} (${vehicle.year}).`;
     const whatsappLink = `https://wa.me/5492284635692?text=${encodeURIComponent(contactMessage)}`;
-    const permutaMessage = `Hola, estoy interesado en el ${vehicle.make} ${vehicle.model} y quisiera consultar por una permuta.`;
-    const whatsappPermutaLink = `https://wa.me/5492284635692?text=${encodeURIComponent(permutaMessage)}`;
-
 
     const specs = [
         { icon: <ShieldIcon className="h-6 w-6"/>, label: "Marca", value: vehicle.make },
@@ -190,97 +177,73 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                 <Breadcrumb vehicle={vehicle} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 xl:gap-12 animate-fade-in">
-                
-                {/* --- Left Column (Main Content) --- */}
-                <div className="lg:col-span-2 space-y-8">
-                    <div className="relative overflow-hidden lg:rounded-2xl lg:shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
-                        <ImageCarousel images={vehicle.images} videoUrl={vehicle.video_url} onPlayVideo={onPlayVideo} />
-                        {vehicle.is_sold && (
-                             <div className="absolute top-10 -left-16 w-64 transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black text-2xl py-2 z-20 pointer-events-none shadow-lg">
-                                Vendido
-                            </div>
-                        )}
-                    </div>
-                    
-                    <DescriptionCard description={vehicle.description} />
-                    
-                    {!vehicle.is_sold && financingConfig && (
-                        <FinancingCalculator config={financingConfig} vehiclePrice={vehicle.price} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12 animate-fade-in">
+                <div className="relative overflow-hidden lg:rounded-2xl shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
+                    <ImageCarousel images={vehicle.images} videoUrl={vehicle.video_url} onPlayVideo={onPlayVideo} />
+                    {vehicle.is_sold && (
+                        <div className="absolute top-10 -left-16 w-64 transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black text-2xl py-2 z-20 pointer-events-none shadow-lg">Vendido</div>
                     )}
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-800 p-6 flex flex-col">
+                    <div className="flex justify-between items-start gap-x-4 flex-wrap">
+                        <h1 className="text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">{vehicle.make} {vehicle.model}</h1>
+                        <span className="text-lg font-bold inline-block align-baseline py-1 px-4 rounded-full text-rago-burgundy bg-rago-burgundy/10 dark:text-white dark:bg-rago-burgundy">{vehicle.year}</span>
+                    </div>
+
+                    <div className="my-5">
+                        <p className="text-5xl lg:text-6xl font-extrabold text-rago-burgundy">${vehicle.price.toLocaleString('es-AR')}</p>
+                    </div>
 
                     {!vehicle.is_sold && (
-                        <TestDriveSection vehicle={vehicle} />
+                        <div className="my-3 p-3 text-center rounded-lg bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300">
+                            <p className="font-semibold text-base">¡Aceptamos tu usado en parte de pago!</p>
+                        </div>
                     )}
 
-                    <VehicleReviews reviews={vehicleReviews} />
-                </div>
-
-                {/* --- Right Column (Sticky Sidebar) --- */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-28 space-y-6">
-                        
-                        {/* Info & Actions Card */}
-                        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-subtle dark:shadow-subtle-dark overflow-hidden border border-gray-200 dark:border-gray-800 p-6">
-                            <div className="flex justify-between items-center gap-x-4 border-b dark:border-gray-700 pb-4 mb-5 flex-wrap">
-                                <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                                    {vehicle.make} {vehicle.model}
-                                </h1>
-                                <span className="text-xl font-bold inline-block align-baseline py-1 px-4 rounded-full text-rago-burgundy bg-rago-burgundy/10 dark:text-white dark:bg-rago-burgundy">
-                                    {vehicle.year}
-                                </span>
-                            </div>
-                            
-                            <div className="mb-6">
-                                <p className="text-4xl sm:text-5xl font-extrabold text-rago-burgundy">
-                                    ${vehicle.price.toLocaleString('es-AR')}
-                                </p>
-                            </div>
-                            
-                            {vehicle.is_sold ? (
-                                <div className="w-full flex items-center justify-center gap-3 text-center bg-slate-400 dark:bg-slate-700 text-white font-bold py-3 px-4 rounded-lg text-lg cursor-not-allowed">
-                                    Vehículo Vendido
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    <a
-                                        href={whatsappLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={handleWhatsAppClick}
-                                        className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 text-lg transform hover:-translate-y-0.5 animate-pulse-burgundy"
-                                    >
-                                        <ChatBubbleIcon className="h-6 w-6" />
-                                        <span>Contactar por WhatsApp</span>
-                                    </a>
-                                     <a
-                                        href={whatsappPermutaLink}
-                                        onClick={() => trackEvent('click_trade-in_request', vehicle.id)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="group w-full flex items-center justify-center gap-3 text-center bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 text-lg transform hover:-translate-y-0.5"
-                                    >
-                                        <ArrowUpDownIcon className="h-6 w-6" />
-                                        <span>Consultar por Permuta</span>
-                                    </a>
-                                    <button
-                                        onClick={handleFavoriteClick}
-                                        className={`group w-full flex items-center justify-center gap-3 text-center font-bold py-3 px-4 rounded-lg transition-colors duration-300 text-lg ${isCurrentlyFavorite ? 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60' : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
-                                        aria-label={isCurrentlyFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
-                                    >
-                                        <HeartIcon className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" filled={isCurrentlyFavorite} />
-                                        <span>{isCurrentlyFavorite ? 'Guardado en Favoritos' : 'Guardar en Favoritos'}</span>
+                    <div className="mt-2 space-y-3">
+                        {vehicle.is_sold ? (
+                            <div className="w-full flex items-center justify-center gap-3 text-center bg-slate-400 dark:bg-slate-700 text-white font-bold py-3.5 px-4 rounded-lg text-lg cursor-not-allowed">Vehículo Vendido</div>
+                        ) : (
+                            <>
+                                <a
+                                    href={whatsappLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={handleWhatsAppClick}
+                                    className="group w-full flex items-center justify-center gap-2 text-center bg-rago-burgundy hover:bg-rago-burgundy-darker text-white font-bold py-3.5 px-4 rounded-lg transition-all duration-300 transform hover:-translate-y-px"
+                                >
+                                    <ChatBubbleIcon className="h-5 w-5" />
+                                    <span>Contactar por WhatsApp</span>
+                                </a>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button onClick={() => setModalContent('financing')} className="group w-full flex items-center justify-center gap-2 text-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold py-3 px-4 rounded-lg transition-all duration-300">
+                                        <CalculatorIcon className="h-5 w-5"/>
+                                        <span>Calcular Financiación</span>
+                                    </button>
+                                    <button onClick={() => setModalContent('test-drive')} className="group w-full flex items-center justify-center gap-2 text-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold py-3 px-4 rounded-lg transition-all duration-300">
+                                        <SteeringWheelIcon className="h-5 w-5"/>
+                                        <span>Agendar Test Drive</span>
                                     </button>
                                 </div>
-                            )}
+                            </>
+                        )}
+                    </div>
 
-                             <SocialShareButtons vehicle={vehicle} />
-                        </div>
-
-                        {/* Specs Card */}
-                        <SpecsCard specs={specs} />
+                    <div className="mt-auto pt-6">
+                        <SocialShareButtons vehicle={vehicle} />
                     </div>
                 </div>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                 <div className="space-y-8">
+                     <DescriptionCard description={vehicle.description} />
+                     <VehicleReviews reviews={vehicleReviews} />
+                 </div>
+                 <div className="lg:sticky top-28 h-fit">
+                    <SpecsCard specs={specs} />
+                 </div>
             </div>
 
             {relatedVehicles.length > 0 && (
@@ -321,6 +284,28 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                     </div>
                     <style>{`.hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }`}</style>
                 </section>
+            )}
+
+            {modalContent === 'financing' && financingConfig && (
+                <ActionModal 
+                    isOpen={modalContent === 'financing'}
+                    onClose={() => setModalContent(null)}
+                    title="Calculadora de Financiación"
+                    icon={<CalculatorIcon className="h-6 w-6"/>}
+                >
+                    <FinancingCalculator config={financingConfig} vehiclePrice={vehicle.price} />
+                </ActionModal>
+            )}
+            
+            {modalContent === 'test-drive' && (
+                <ActionModal 
+                    isOpen={modalContent === 'test-drive'}
+                    onClose={() => setModalContent(null)}
+                    title="Agendar Prueba de Manejo"
+                    icon={<SteeringWheelIcon className="h-6 w-6"/>}
+                >
+                    <TestDriveSection vehicle={vehicle} />
+                </ActionModal>
             )}
         </div>
     );
