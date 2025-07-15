@@ -66,8 +66,8 @@ const App: React.FC = () => {
             const vehiclesResult = await supabase
                 .from('vehicles')
                 .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuel_type,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
-                .order('display_order', { ascending: true })
                 .order('is_sold', { ascending: true })
+                .order('display_order', { ascending: true, nullsFirst: false })
                 .order('created_at', { ascending: false });
             
             if (vehiclesResult.error) throw vehiclesResult.error;
