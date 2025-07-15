@@ -15,14 +15,6 @@ const initSupabaseAdmin = () => {
     return createClient<Database>(supabaseUrl, supabaseServiceKey);
 };
 
-const initSupabasePublic = () => {
-     const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase public configuration is incomplete.');
-    }
-    return createClient<Database>(supabaseUrl, supabaseAnonKey);
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
@@ -33,20 +25,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     
     try {
+        const supabaseAdmin = initSupabaseAdmin();
+
         switch (req.method) {
             case 'GET': {
                 const { vehicle_id, admin } = req.query;
                 if (admin === 'true') {
+                    // Admin request (protected)
                     if (!getVerifiedTokenPayload(req)) {
                         return res.status(401).json({ message: 'Authentication required.' });
                     }
-                    const supabaseAdmin = initSupabaseAdmin();
                     const { data, error } = await supabaseAdmin.from('reviews').select('*').order('created_at', { ascending: false });
                     if (error) throw error;
                     return res.status(200).json({ reviews: data });
                 } else if (vehicle_id) {
-                    const supabasePublic = initSupabasePublic();
-                    const { data, error } = await supabasePublic.from('reviews').select('*').eq('vehicle_id', parseInt(vehicle_id as string, 10)).eq('is_approved', true).order('created_at', { ascending: false });
+                    // Public request (uses admin client but filters for safety)
+                    const { data, error } = await supabaseAdmin
+                        .from('reviews')
+                        .select('*')
+                        .eq('vehicle_id', parseInt(vehicle_id as string, 10))
+                        .eq('is_approved', true) // This filter is crucial
+                        .order('created_at', { ascending: false });
                     if (error) throw error;
                     return res.status(200).json({ reviews: data });
                 } else {
@@ -69,8 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     is_approved: false,
                 };
 
-                const supabaseAdminInsert = initSupabaseAdmin();
-                const { error: insertError } = await supabaseAdminInsert.from('reviews').insert(reviewToInsert);
+                const { error: insertError } = await supabaseAdmin.from('reviews').insert(reviewToInsert);
                 if (insertError) throw insertError;
                 return res.status(201).json({ success: true });
             }
@@ -83,8 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 if (!reviewId || !update) {
                     return res.status(400).json({ message: 'Invalid request body for update.' });
                 }
-                const adminClientUpdate = initSupabaseAdmin();
-                const { data: updatedData, error: updateError } = await adminClientUpdate.from('reviews').update(update).eq('id', reviewId).select().single();
+                const { data: updatedData, error: updateError } = await supabaseAdmin.from('reviews').update(update).eq('id', reviewId).select().single();
                 if (updateError) throw updateError;
                 return res.status(200).json({ success: true, review: updatedData });
             }
@@ -97,8 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 if (!idToDelete) {
                     return res.status(400).json({ message: 'reviewId is required for delete.' });
                 }
-                const adminClientDelete = initSupabaseAdmin();
-                const { error: deleteError } = await adminClientDelete.from('reviews').delete().eq('id', idToDelete);
+                const { error: deleteError } = await supabaseAdmin.from('reviews').delete().eq('id', idToDelete);
                 if (deleteError) throw deleteError;
                 return res.status(200).json({ success: true, message: 'Review deleted.' });
             }

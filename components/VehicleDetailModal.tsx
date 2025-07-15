@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Vehicle } from '../types';
 import ImageCarousel from './ImageCarousel';
@@ -59,7 +60,7 @@ const VehicleDetailModal: React.FC<VehicleDetailModalProps> = ({ vehicle, onClos
                                             <SpecificationItem icon={<GaugeIcon className="h-7 w-7"/>} label="Kilometraje" value={`${vehicle.mileage.toLocaleString()} km`} />
                                             <SpecificationItem icon={<CogIcon className="h-7 w-7"/>} label="Motor" value={vehicle.engine} />
                                             <SpecificationItem icon={<SlidersIcon className="h-7 w-7"/>} label="Transmisión" value={vehicle.transmission} />
-                                            <SpecificationItem icon={<GasPumpIcon className="h-7 w-7"/>} label="Combustible" value={vehicle.fuelType} />
+                                            <SpecificationItem icon={<GasPumpIcon className="h-7 w-7"/>} label="Combustible" value={vehicle.fuel_type} />
                                         </div>
                                     </div>
                                 </section>
