@@ -29,14 +29,7 @@ export type Database = {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       reviews: {
         Row: {
@@ -72,14 +65,7 @@ export type Database = {
           vehicle_id?: number | null
           show_on_homepage?: boolean
         }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       site_config: {
         Row: {

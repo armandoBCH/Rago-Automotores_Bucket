@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { FinancingConfig } from '../types';
-import { CalculatorIcon, CircleDollarSignIcon } from '../constants';
+import { CalculatorIcon } from '../constants';
 
 interface FinancingCalculatorProps {
     config: FinancingConfig;
@@ -23,7 +23,6 @@ const FinancingCalculator: React.FC<FinancingCalculatorProps> = ({ config, vehic
 
     const [amount, setAmount] = useState(initialAmount);
     const [term, setTerm] = useState(Math.min(12, maxTerm));
-    const [isExpanded, setIsExpanded] = useState(false);
 
     const monthlyPayment = useMemo(() => {
         if (amount <= 0 || term <= 0 || interestRate < 0) return 0;
@@ -43,63 +42,53 @@ const FinancingCalculator: React.FC<FinancingCalculatorProps> = ({ config, vehic
 
     return (
         <section className="bg-white dark:bg-gray-900 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-gray-200 dark:border-gray-800">
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex justify-between items-center px-6 py-4 border-b border-gray-200 dark:border-gray-800"
-                aria-expanded={isExpanded}
-                aria-controls="financing-calculator-content"
-            >
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
                     <CalculatorIcon className="h-7 w-7 text-rago-burgundy" />
                     Calculadora de Financiación
                 </h3>
-                <svg className={`w-6 h-6 transform transition-transform duration-300 text-slate-500 ${isExpanded ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            <div id="financing-calculator-content" className={`transition-all duration-500 ease-in-out grid ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                <div className="overflow-hidden">
-                    <div className="p-6 space-y-6">
-                        <div>
-                            <label htmlFor="amount" className="block text-base font-medium text-slate-700 dark:text-slate-300">Monto a financiar: <span className="font-bold text-rago-burgundy">{formatCurrency(amount)}</span></label>
-                            <input
-                                id="amount"
-                                type="range"
-                                min="100000"
-                                max={maxAmount}
-                                step="50000"
-                                value={amount}
-                                onChange={(e) => setAmount(Number(e.target.value))}
-                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 mt-2"
-                            />
-                        </div>
+            </div>
+            <div className="p-6 space-y-6">
+                <div>
+                    <label htmlFor="amount" className="block text-base font-medium text-slate-700 dark:text-slate-300">Monto a financiar: <span className="font-bold text-rago-burgundy">{formatCurrency(amount)}</span></label>
+                    <input
+                        id="amount"
+                        type="range"
+                        min="100000"
+                        max={maxAmount}
+                        step="50000"
+                        value={amount}
+                        onChange={(e) => setAmount(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 mt-2"
+                    />
+                </div>
 
-                        <div>
-                            <label htmlFor="term" className="block text-base font-medium text-slate-700 dark:text-slate-300">Plazo: <span className="font-bold text-rago-burgundy">{term} meses</span></label>
-                            <input
-                                id="term"
-                                type="range"
-                                min="1"
-                                max={maxTerm}
-                                step="1"
-                                value={term}
-                                onChange={(e) => setTerm(Number(e.target.value))}
-                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 mt-2"
-                            />
-                        </div>
+                <div>
+                    <label htmlFor="term" className="block text-base font-medium text-slate-700 dark:text-slate-300">Plazo: <span className="font-bold text-rago-burgundy">{term} meses</span></label>
+                    <input
+                        id="term"
+                        type="range"
+                        min="1"
+                        max={maxTerm}
+                        step="1"
+                        value={term}
+                        onChange={(e) => setTerm(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer dark:bg-slate-700 mt-2"
+                    />
+                </div>
 
-                        <div className="p-5 bg-slate-100 dark:bg-slate-800/50 rounded-xl space-y-4 text-center">
-                            <p className="text-lg text-slate-600 dark:text-slate-400">Cuota mensual estimada</p>
-                            <p className="text-4xl font-extrabold text-rago-burgundy">{formatCurrency(monthlyPayment)}</p>
-                            <div className="text-sm text-slate-500 dark:text-slate-500 pt-3 border-t border-slate-200 dark:border-slate-700">
-                                Total a pagar: {formatCurrency(totalPayment)} | Intereses: {formatCurrency(totalInterest)}<br/>
-                                <em className="mt-1 block">Tasa de interés mensual de referencia: {interestRate}%.</em>
-                            </div>
-                        </div>
-
-                        <p className="text-xs text-center text-slate-500 dark:text-slate-400">
-                            Este es un cálculo estimado y no constituye una oferta de crédito. Las condiciones finales pueden variar.
-                        </p>
+                <div className="p-5 bg-slate-100 dark:bg-slate-800/50 rounded-xl space-y-4 text-center">
+                    <p className="text-lg text-slate-600 dark:text-slate-400">Cuota mensual estimada</p>
+                    <p className="text-4xl font-extrabold text-rago-burgundy">{formatCurrency(monthlyPayment)}</p>
+                    <div className="text-sm text-slate-500 dark:text-slate-500 pt-3 border-t border-slate-200 dark:border-slate-700">
+                        Total a pagar: {formatCurrency(totalPayment)} | Intereses: {formatCurrency(totalInterest)}<br/>
+                        <em className="mt-1 block">Tasa de interés mensual de referencia: {interestRate}%.</em>
                     </div>
                 </div>
+
+                <p className="text-xs text-center text-slate-500 dark:text-slate-400">
+                    Este es un cálculo estimado y no constituye una oferta de crédito. Las condiciones finales pueden variar.
+                </p>
             </div>
         </section>
     );
