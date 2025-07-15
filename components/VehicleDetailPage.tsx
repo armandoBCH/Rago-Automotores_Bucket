@@ -1,19 +1,22 @@
 
-
-import React, { useMemo, useEffect, useRef } from 'react';
-import { Vehicle } from '../types';
+import React, { useMemo, useEffect, useRef, useState } from 'react';
+import { Vehicle, Review, FinancingSettings } from '../types';
 import ImageCarousel from './ImageCarousel';
 import VehicleCard from './VehicleCard';
 import SocialShareButtons from './SocialShareButtons';
 import DescriptionCard from './DescriptionCard';
-import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon, CarIcon, ArrowUpDownIcon } from '../constants';
+import { ShieldIcon, TagIcon, CalendarIcon, GaugeIcon, CogIcon, SlidersIcon, GasPumpIcon, ChatBubbleIcon, ArrowRightIcon, ArrowLeftIcon, HeartIcon, CarIcon, ArrowUpDownIcon, SteeringWheelIcon } from '../constants';
 import { trackEvent } from '../lib/analytics';
 import { optimizeUrl, slugify } from '../utils/image';
 import { useFavorites } from './FavoritesProvider';
+import FinancingCalculator from './FinancingCalculator';
+import ReviewsSection from './ReviewsSection';
+import TestDriveModal from './TestDriveModal';
 
 interface VehicleDetailPageProps {
     vehicle: Vehicle;
     allVehicles: Vehicle[];
+    financingSettings: FinancingSettings | null;
     onPlayVideo: (url: string) => void;
 }
 
@@ -43,7 +46,7 @@ const Breadcrumb: React.FC<{ vehicle: Vehicle }> = ({ vehicle }) => (
     </div>
 );
 
-const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppClick: () => void }> = ({ vehicle, whatsappLink, onWhatsAppClick }) => {
+const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppClick: () => void, onTestDriveClick: () => void }> = ({ vehicle, whatsappLink, onWhatsAppClick, onTestDriveClick }) => {
     return (
         <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-4 sm:p-6 shadow-subtle dark:shadow-subtle-dark">
             <div className="flex justify-between items-center gap-x-4 border-b dark:border-gray-700 pb-4 mb-6 flex-wrap">
@@ -74,16 +77,25 @@ const PriceCard: React.FC<{ vehicle: Vehicle, whatsappLink: string, onWhatsAppCl
                     Vehículo Vendido
                 </div>
             ) : (
-                <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={onWhatsAppClick}
-                    className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-lg sm:text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
-                >
-                    <ChatBubbleIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
-                    <span>Contactar por WhatsApp</span>
-                </a>
+                <div className="space-y-3">
+                     <button
+                        onClick={onTestDriveClick}
+                        className="group w-full flex items-center justify-center gap-3 text-center bg-slate-800 hover:bg-slate-950 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-lg sm:text-xl transform hover:-translate-y-0.5"
+                    >
+                        <SteeringWheelIcon className="h-7 w-7 transition-transform duration-300 group-hover:rotate-[-15deg]" />
+                        <span>Agendar Prueba de Manejo</span>
+                    </button>
+                    <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={onWhatsAppClick}
+                        className="group w-full flex items-center justify-center gap-3 text-center bg-gradient-to-r from-rago-burgundy to-rago-burgundy-darker hover:shadow-rago-glow text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 text-lg sm:text-xl transform hover:-translate-y-0.5 animate-pulse-burgundy"
+                    >
+                        <ChatBubbleIcon className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" />
+                        <span>Contactar por WhatsApp</span>
+                    </a>
+                </div>
             )}
             <SocialShareButtons vehicle={vehicle} />
         </div>
@@ -106,10 +118,11 @@ const SpecsCard: React.FC<{ specs: { icon: JSX.Element; label: string; value: st
 );
 
 
-const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, onPlayVideo }) => {
+const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehicles, financingSettings, onPlayVideo }) => {
     const similarVehiclesRef = useRef<HTMLDivElement>(null);
     const { addFavorite, removeFavorite, isFavorite } = useFavorites();
     const isCurrentlyFavorite = isFavorite(vehicle.id);
+    const [isTestDriveModalOpen, setIsTestDriveModalOpen] = useState(false);
 
     const handleFavoriteClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -237,6 +250,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
 
     return (
         <div className="max-w-screen-xl mx-auto">
+            {isTestDriveModalOpen && <TestDriveModal isOpen={true} onClose={() => setIsTestDriveModalOpen(false)} vehicle={vehicle} />}
             <div className="hidden lg:block mb-8 opacity-0 animate-fade-in-up">
                 <Breadcrumb vehicle={vehicle} />
             </div>
@@ -275,24 +289,31 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
 
                     {/* Content for Mobile */}
                     <div className="lg:hidden space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-                        <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} />
+                        <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} onTestDriveClick={() => setIsTestDriveModalOpen(true)} />
                         <SpecsCard specs={specs} />
+                        {!vehicle.is_sold && financingSettings && <FinancingCalculator vehiclePrice={vehicle.price} settings={financingSettings} />}
                         <DescriptionCard description={vehicle.description} />
                     </div>
                     
-                    {/* Description for Desktop */}
-                    <div className="hidden lg:block opacity-0 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
+                    {/* Description & Finance for Desktop */}
+                    <div className="hidden lg:block space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '250ms' }}>
                         <DescriptionCard description={vehicle.description} />
+                        {!vehicle.is_sold && financingSettings && <FinancingCalculator vehiclePrice={vehicle.price} settings={financingSettings} />}
                     </div>
                 </div>
 
                 {/* --- Right Column (Sticky on Desktop) --- */}
                 <div className="hidden lg:block lg:col-span-2">
                     <div className="lg:sticky lg:top-28 space-y-8 opacity-0 animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-                        <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} />
+                        <PriceCard vehicle={vehicle} whatsappLink={whatsappLink} onWhatsAppClick={handleWhatsAppClick} onTestDriveClick={() => setIsTestDriveModalOpen(true)} />
                         <SpecsCard specs={specs} />
                     </div>
                 </div>
+            </div>
+            
+            {/* Reviews Section */}
+            <div className="mt-12 lg:mt-16 opacity-0 animate-fade-in-up" style={{ animationDelay: '350ms' }}>
+                 <ReviewsSection vehicle={vehicle} />
             </div>
 
             {/* Similar Vehicles Section */}

@@ -1,9 +1,7 @@
 
-
-
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate } from './types';
+import { Vehicle, VehicleFormData, AnalyticsEvent, VehicleUpdate, FinancingSettings } from './types';
 import { ChatBubbleIcon, InstagramIcon, CatalogIcon, SellCarIcon, HomeIcon, DownIcon, StarIcon, HeartIcon, SlidersIcon, XIcon } from './constants';
 import { supabase } from './lib/supabaseClient';
 import { trackEvent } from './lib/analytics';
@@ -33,6 +31,7 @@ type ModalState =
 const App: React.FC = () => {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [analyticsEvents, setAnalyticsEvents] = useState<AnalyticsEvent[]>([]);
+    const [financingSettings, setFinancingSettings] = useState<FinancingSettings | null>(null);
     const [loading, setLoading] = useState(true);
     const [dbError, setDbError] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem('rago-admin') === 'true');
@@ -60,16 +59,20 @@ const App: React.FC = () => {
         setLoading(true);
         setDbError(null);
         try {
-            // Fetch vehicles always, now sorted by the new custom order field
-            const vehiclesResult = await supabase
+            const fetchVehicles = supabase
                 .from('vehicles')
                 .select('id,created_at,make,model,year,price,mileage,engine,transmission,fuelType,vehicle_type,description,images,is_featured,is_sold,display_order,video_url')
                 .order('display_order', { ascending: true })
                 .order('is_sold', { ascending: true })
                 .order('created_at', { ascending: false });
             
+            const fetchSettings = fetch('/api/get-financing-settings').then(res => res.json());
+
+            const [vehiclesResult, settingsResult] = await Promise.all([fetchVehicles, fetchSettings]);
+
             if (vehiclesResult.error) throw vehiclesResult.error;
             setVehicles(vehiclesResult.data || []);
+            setFinancingSettings(settingsResult.settings || null);
 
             // Conditionally fetch analytics only for admins
             if (isAdmin) {
@@ -419,7 +422,7 @@ const App: React.FC = () => {
         }
     };
     
-    const handleAnalyticsReset = () => fetchAllData();
+    const handleDataRefresh = () => fetchAllData();
     const NotFoundPage = () => (
         <div className="text-center py-16"><h1 className="text-4xl font-bold text-rago-burgundy mb-4">404</h1><p>Página No Encontrada</p><a href="/" className="mt-8 inline-block px-6 py-3 font-semibold text-white bg-rago-burgundy rounded-lg">Volver al Inicio</a></div>
     );
@@ -439,17 +442,18 @@ const App: React.FC = () => {
                     <AdminPanel 
                         vehicles={vehicles} 
                         allEvents={analyticsEvents} 
+                        financingSettings={financingSettings}
                         onAdd={handleAddVehicleClick} 
                         onEdit={handleEditVehicleClick} 
                         onDelete={handleDeleteVehicleClick} 
                         onLogout={handleLogout} 
-                        onAnalyticsReset={handleAnalyticsReset} 
+                        onDataRefresh={handleDataRefresh}
                         onToggleFeatured={handleToggleFeatured}
                         onToggleSold={handleToggleSold}
                         onReorder={handleReorder}
                     />
                 </main>
-                {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} uniqueVehicleTypes={uniqueVehicleTypes} />}
+                {modalState.type === 'form' && <VehicleFormModal isOpen={true} onClose={handleCloseModal} onSubmit={handleSaveVehicle} initialData={modalState.vehicle} brands={uniqueBrands} />}
                 {modalState.type === 'confirmDelete' && <ConfirmationModal isOpen={true} onClose={handleCloseModal} onConfirm={confirmDelete} title="Confirmar Eliminación" message="¿Estás seguro de que quieres eliminar este vehículo? Esta acción no se puede deshacer." isConfirming={isDeleting} />}
             </div>
         );
@@ -458,7 +462,7 @@ const App: React.FC = () => {
     const renderPublicContent = () => {
         if (loading) return <div className="text-center py-16">Cargando...</div>;
         if (dbError) return <div className="text-center py-16 text-red-500">{dbError}</div>;
-        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl} /> : <NotFoundPage />;
+        if (vehicleId) return selectedVehicle ? <VehicleDetailPage vehicle={selectedVehicle} allVehicles={vehicles} financingSettings={financingSettings} onPlayVideo={setPlayingVideoUrl} /> : <NotFoundPage />;
         if (isFavoritesPage) return <FavoritesPage allVehicles={vehicles} onPlayVideo={setPlayingVideoUrl}/>;
         if (isHomePage) return (
             <>
