@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Review, ReviewUpdate } from '../types';
 import { XIcon, StarIcon } from '../constants';
@@ -9,7 +10,7 @@ interface ReviewEditModalProps {
     reviewData: Review;
 }
 
-const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
+const StarRatingDisplay: React.FC<{ rating: number }> = ({ rating }) => (
     <div className="flex items-center gap-1">
         {[...Array(5)].map((_, i) => (
             <StarIcon key={i} className={`h-5 w-5 ${i < rating ? 'text-amber-400' : 'text-slate-300'}`} filled={i < rating} />
@@ -18,16 +19,29 @@ const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
 );
 
 const ReviewEditModal: React.FC<ReviewEditModalProps> = ({ isOpen, onClose, onUpdate, reviewData }) => {
-    const [response, setResponse] = useState('');
+    const [formData, setFormData] = useState({
+        customer_name: '',
+        comment: '',
+        response_from_owner: ''
+    });
     const [isAnimatingOut, setIsAnimatingOut] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             setIsAnimatingOut(false);
-            setResponse(reviewData.response_from_owner || '');
+            setFormData({
+                customer_name: reviewData.customer_name || '',
+                comment: reviewData.comment || '',
+                response_from_owner: reviewData.response_from_owner || ''
+            });
         }
     }, [isOpen, reviewData]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
 
     const handleClose = () => {
         if (isSaving) return;
@@ -41,11 +55,12 @@ const ReviewEditModal: React.FC<ReviewEditModalProps> = ({ isOpen, onClose, onUp
         try {
             await onUpdate({
                 id: reviewData.id,
-                response_from_owner: response,
+                customer_name: formData.customer_name,
+                comment: formData.comment,
+                response_from_owner: formData.response_from_owner,
             });
             // Parent component will close the modal on success
         } catch (error) {
-            // Error is alerted by parent. Modal remains open for user to retry.
             console.error("Failed to update review:", error);
         } finally {
             setIsSaving(false);
@@ -68,31 +83,39 @@ const ReviewEditModal: React.FC<ReviewEditModalProps> = ({ isOpen, onClose, onUp
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center p-4 border-b dark:border-slate-700">
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Responder a la Reseña</h3>
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Editar Reseña</h3>
                     <button onClick={handleClose} disabled={isSaving} className="text-slate-500 hover:text-slate-800 dark:hover:text-white disabled:opacity-50"><XIcon className="h-6 w-6" /></button>
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 space-y-6">
                         <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg border dark:border-slate-700">
-                            <div className="flex justify-between items-start">
-                                <p className="font-bold text-slate-800 dark:text-white">{reviewData.customer_name}</p>
-                                <StarRating rating={reviewData.rating} />
-                            </div>
-                            <p className="mt-2 text-base text-slate-600 dark:text-slate-300 italic">
-                                "{reviewData.comment || 'Sin comentario.'}"
-                            </p>
+                             <h4 className="text-base font-bold text-slate-600 dark:text-slate-300 mb-3">Datos de la Reseña (Editable)</h4>
+                             <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="customer_name" className="block text-sm font-medium text-slate-700 dark:text-slate-400">Nombre del Cliente</label>
+                                    <input id="customer_name" name="customer_name" type="text" value={formData.customer_name} onChange={handleChange} className="mt-1 form-input"/>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium text-slate-700 dark:text-slate-400">Calificación</span>
+                                    <StarRatingDisplay rating={reviewData.rating} />
+                                </div>
+                                <div>
+                                    <label htmlFor="comment" className="block text-sm font-medium text-slate-700 dark:text-slate-400">Comentario del Cliente</label>
+                                    <textarea id="comment" name="comment" value={formData.comment} onChange={handleChange} rows={4} className="mt-1 form-input"/>
+                                </div>
+                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="response" className="block text-base font-medium text-slate-700 dark:text-slate-300">
-                                Tu Respuesta
+                            <label htmlFor="response_from_owner" className="block text-base font-medium text-slate-700 dark:text-slate-300">
+                                Tu Respuesta Pública
                             </label>
                             <textarea
-                                id="response"
-                                name="response"
-                                value={response}
-                                onChange={(e) => setResponse(e.target.value)}
+                                id="response_from_owner"
+                                name="response_from_owner"
+                                value={formData.response_from_owner}
+                                onChange={handleChange}
                                 rows={4}
                                 className="mt-1 form-input"
                                 placeholder="Escribe una respuesta pública al cliente..."
@@ -115,7 +138,7 @@ const ReviewEditModal: React.FC<ReviewEditModalProps> = ({ isOpen, onClose, onUp
                             disabled={isSaving}
                             className="px-4 py-2 text-base font-medium text-white bg-rago-burgundy rounded-md hover:bg-rago-burgundy-darker disabled:opacity-50"
                         >
-                            {isSaving ? 'Guardando...' : 'Guardar Respuesta'}
+                            {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>
                 </form>
