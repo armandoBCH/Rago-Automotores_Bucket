@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent, SiteData, Review, FinancingConfig, ReviewUpdate } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, CogIcon } from '../constants';
@@ -6,6 +5,7 @@ import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
 import VehiclePerformanceTable, { PerformanceData } from './VehiclePerformanceTable';
 import { PageViewsChart, TopVehiclesChart, EventDistributionChart } from './charts/AnalyticsCharts';
+import ReviewEditModal from './ReviewEditModal';
 
 interface AdminPanelProps {
     vehicles: Vehicle[];
@@ -321,11 +321,17 @@ const ReviewsPanel: React.FC<{ onDataUpdate: () => void; vehicles: Vehicle[] }> 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'update_review', payload: reviewData })
             });
-            if (!response.ok) throw new Error('Update failed');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'La actualización falló.');
+            }
             fetchReviews(); // Re-fetch to show changes
             onDataUpdate(); // Update global state
-            setModal(null);
-        } catch (error) { alert('Error al actualizar la reseña.'); }
+            setModal(null); // Close modal on success
+        } catch (error: any) {
+            alert(`Error al actualizar la reseña: ${error.message}`);
+            throw error; // Rethrow to be caught in modal
+        }
     };
 
     const handleDelete = async (reviewId: number) => {
@@ -378,7 +384,14 @@ const ReviewsPanel: React.FC<{ onDataUpdate: () => void; vehicles: Vehicle[] }> 
             </tbody>
         </table></div>
         {modal?.type === 'delete' && <ConfirmationModal isOpen={true} onClose={() => setModal(null)} onConfirm={() => handleDelete(modal.data.id)} title="Eliminar Reseña" message="¿Seguro que quieres eliminar esta reseña?" />}
-        {/* Edit modal would be here */}
+        {modal?.type === 'edit' && (
+            <ReviewEditModal
+                isOpen={true}
+                onClose={() => setModal(null)}
+                reviewData={modal.data}
+                onUpdate={handleUpdate}
+            />
+        )}
         </div>
     )
 };
