@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Vehicle } from '../types';
 import { StarIcon, HeartIcon } from '../constants';
 
@@ -43,6 +43,23 @@ const LeaveReviewPage: React.FC<LeaveReviewPageProps> = ({ vehicles }) => {
     const [rating, setRating] = useState(0);
     const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
+
+    const [vehicleForReview, setVehicleForReview] = useState<Vehicle | null>(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const vehicleIdParam = params.get('vehicle_id');
+        if (vehicleIdParam) {
+            const vehicleId = parseInt(vehicleIdParam, 10);
+            if (!isNaN(vehicleId)) {
+                const foundVehicle = vehicles.find(v => v.id === vehicleId);
+                if (foundVehicle) {
+                    setVehicleForReview(foundVehicle);
+                    setFormData(prev => ({ ...prev, vehicle_id: String(foundVehicle.id) }));
+                }
+            }
+        }
+    }, [vehicles]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -109,15 +126,23 @@ const LeaveReviewPage: React.FC<LeaveReviewPageProps> = ({ vehicles }) => {
                         <label htmlFor="comment" className="block text-base font-medium text-slate-700 dark:text-slate-300">Tu comentario</label>
                         <textarea id="comment" name="comment" value={formData.comment} onChange={handleChange} rows={5} required className="form-input mt-1"></textarea>
                     </div>
-                     <div>
-                        <label htmlFor="vehicle_id" className="block text-base font-medium text-slate-700 dark:text-slate-300">Vehículo que compraste (Opcional)</label>
-                        <select id="vehicle_id" name="vehicle_id" value={formData.vehicle_id} onChange={handleChange} className="form-input mt-1">
-                            <option value="">Fue una consulta general</option>
-                            {vehicles.filter(v => v.is_sold).map(v => (
-                                <option key={v.id} value={v.id}>{v.make} {v.model} ({v.year})</option>
-                            ))}
-                        </select>
-                    </div>
+
+                    {vehicleForReview ? (
+                        <div>
+                            <p className="block text-base font-medium text-slate-700 dark:text-slate-300">Estás dejando una reseña para:</p>
+                            <div className="mt-2 p-3 bg-slate-100 dark:bg-slate-800/50 rounded-lg border dark:border-slate-700">
+                                <p className="font-bold text-lg text-rago-burgundy">{vehicleForReview.make} {vehicleForReview.model} ({vehicleForReview.year})</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <label htmlFor="vehicle_id" className="block text-base font-medium text-slate-700 dark:text-slate-300">Vehículo que compraste (Opcional)</label>
+                            <select id="vehicle_id" name="vehicle_id" value={formData.vehicle_id} onChange={handleChange} className="form-input mt-1">
+                                <option value="">Fue una consulta general</option>
+                                {vehicles.filter(v => v.is_sold).map(v => ( <option key={v.id} value={v.id}>{v.make} {v.model} ({v.year})</option> ))}
+                            </select>
+                        </div>
+                    )}
 
                     {/* Honeypot field for spam */}
                     <input type="text" name="honeypot" value={formData.honeypot} onChange={handleChange} className="hidden" aria-hidden="true" />

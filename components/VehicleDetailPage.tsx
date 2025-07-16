@@ -273,7 +273,7 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                 {/* On desktop, this block moves back to the left column, under the image */}
                 <div className="lg:col-span-7 lg:col-start-1 space-y-8">
                     <DescriptionCard description={vehicle.description} />
-                    <VehicleReviews reviews={vehicleReviews} />
+                    <VehicleReviews reviews={vehicleReviews} vehicleId={vehicle.id} />
                 </div>
             </div>
 

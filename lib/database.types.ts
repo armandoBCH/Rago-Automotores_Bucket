@@ -28,15 +28,7 @@ export interface Database {
           event_type?: string
           vehicle_id?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "analytics_events_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       reviews: {
         Row: {
@@ -72,15 +64,7 @@ export interface Database {
           vehicle_id?: number | null
           show_on_homepage?: boolean
         }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_vehicle_id_fkey"
-            columns: ["vehicle_id"]
-            isOneToOne: false
-            referencedRelation: "vehicles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       site_config: {
         Row: {
@@ -107,7 +91,7 @@ export interface Database {
           price: number
           mileage: number
           engine: string
-          transmission: 'Automática' | 'Manual'
+          transmission: "Automática" | "Manual"
           fuel_type: string
           vehicle_type: string
           description: string
@@ -126,7 +110,7 @@ export interface Database {
           price: number
           mileage: number
           engine: string
-          transmission: 'Automática' | 'Manual'
+          transmission: "Automática" | "Manual"
           fuel_type: string
           vehicle_type: string
           description: string
@@ -145,7 +129,7 @@ export interface Database {
           price?: number
           mileage?: number
           engine?: string
-          transmission?: 'Automática' | 'Manual'
+          transmission?: "Automática" | "Manual"
           fuel_type?: string
           vehicle_type?: string
           description?: string

@@ -19,9 +19,19 @@ const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
     <div className="h-full flex flex-col bg-white dark:bg-slate-800/50 p-8 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-800">
         <div className="flex-grow">
             <StarRating rating={review.rating} />
-            <p className="mt-4 text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed italic">
-                "{review.comment}"
-            </p>
+            {review.comment && (
+                <p className="mt-4 text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                    "{review.comment}"
+                </p>
+            )}
+            {review.response_from_owner && (
+                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-4 rounded-lg">
+                    <p className="font-bold text-sm text-slate-700 dark:text-white">Respuesta de Rago Automotores:</p>
+                    <p className="mt-2 text-base text-slate-600 dark:text-slate-300 italic">
+                        {review.response_from_owner}
+                    </p>
+                </div>
+            )}
         </div>
         <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
             <p className="font-bold text-slate-800 dark:text-white">{review.customer_name}</p>
