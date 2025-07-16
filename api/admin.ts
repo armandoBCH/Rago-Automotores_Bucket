@@ -1,6 +1,4 @@
 
-
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../lib/database.types';
@@ -71,7 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                         return res.status(404).json({ message: `Vehículo con id ${vehicleId} no encontrado.` });
                     }
 
-                    if (vehicle?.images?.length > 0) {
+                    if (vehicle && vehicle.images && vehicle.images.length > 0) {
                         const filePaths = vehicle.images.map((url: string) => { try { const pathParts = new URL(url).pathname.split('/vehicle-images/'); return pathParts.length > 1 ? decodeURIComponent(pathParts[1]) : null; } catch (e) { return null; } }).filter((p): p is string => p !== null);
                         if (filePaths.length > 0) await supabaseAdmin.storage.from('vehicle-images').remove(filePaths);
                     }

@@ -1,13 +1,4 @@
 
-
-
-
-
-
-
-
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent, SiteData, Review, FinancingConfig, ReviewUpdate } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, CogIcon } from '../constants';
@@ -339,15 +330,19 @@ const ReviewsPanel: React.FC<{ onDataUpdate: () => void; vehicles: Vehicle[] }> 
 
     const handleDelete = async (reviewId: number) => {
         try {
-            await fetch('/api/admin', {
+            const response = await fetch('/api/admin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'delete_review', payload: { id: reviewId } })
             });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'La eliminación falló.');
+            }
             fetchReviews();
             onDataUpdate();
             setModal(null);
-        } catch (error) { alert('Error al eliminar la reseña.'); }
+        } catch (error: any) { alert(`Error al eliminar la reseña: ${error.message}`); }
     };
     
     const ToggleButton: React.FC<{isToggled: boolean, onToggle: ()=>void}> = ({isToggled, onToggle}) => (
