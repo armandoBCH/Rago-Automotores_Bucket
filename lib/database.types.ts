@@ -3,10 +3,10 @@ export type Json =
   | number
   | boolean
   | null
-  | { [key: string]: any }
-  | any[]
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
       analytics_events: {

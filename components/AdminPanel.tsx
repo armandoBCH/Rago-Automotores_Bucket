@@ -14,6 +14,7 @@ import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBub
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
 import VehiclePerformanceTable, { PerformanceData } from './VehiclePerformanceTable';
+import { PageViewsChart, TopVehiclesChart, EventDistributionChart } from './charts/AnalyticsCharts';
 
 interface AdminPanelProps {
     vehicles: Vehicle[];
@@ -66,8 +67,9 @@ const StatsView: React.FC<{ vehicles: Vehicle[]; allEvents: AnalyticsEvent[]; on
     const filteredEvents = useMemo(() => {
         if (dateRange === 'all') return allEvents;
         const now = new Date();
-        const daysToSubtract = dateRange === '7d' ? 7 : 30;
+        const daysToSubtract = dateRange === '7d' ? 6 : 29; // Show 7 or 30 days inclusive
         const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract);
+        startDate.setHours(0, 0, 0, 0);
         return allEvents.filter(event => new Date(event.created_at) >= startDate);
     }, [allEvents, dateRange]);
 
@@ -88,6 +90,51 @@ const StatsView: React.FC<{ vehicles: Vehicle[]; allEvents: AnalyticsEvent[]; on
     const totalContacts = useMemo(() => filteredEvents.filter(e => e.event_type === 'click_whatsapp_vehicle').length, [filteredEvents]);
     const totalFavorites = useMemo(() => filteredEvents.filter(e => e.event_type === 'favorite_add').length, [filteredEvents]);
     const conversionRate = totalViews > 0 ? ((totalContacts / totalViews) * 100).toFixed(1) + '%' : '0%';
+
+    const chartData = useMemo(() => {
+        const pageViewsByDay: { [key: string]: number } = {};
+        const topVehiclesMap: { [key: number]: number } = {};
+        const eventDistributionMap: { [key: string]: number } = {};
+
+        const today = new Date();
+        const days = dateRange === '7d' ? 7 : (dateRange === '30d' ? 30 : 90);
+        for (let i = 0; i < days; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            pageViewsByDay[d.toISOString().split('T')[0]] = 0;
+        }
+
+        filteredEvents.forEach(event => {
+            if (event.event_type === 'page_view') {
+                const date = new Date(event.created_at).toISOString().split('T')[0];
+                if (pageViewsByDay[date] !== undefined) {
+                    pageViewsByDay[date] = (pageViewsByDay[date] || 0) + 1;
+                }
+            }
+            if (event.event_type === 'view_vehicle_detail' && event.vehicle_id) {
+                topVehiclesMap[event.vehicle_id] = (topVehiclesMap[event.vehicle_id] || 0) + 1;
+            }
+            eventDistributionMap[event.event_type] = (eventDistributionMap[event.event_type] || 0) + 1;
+        });
+
+        const sortedPageViews = Object.entries(pageViewsByDay).sort((a,b) => new Date(a[0]).getTime() - new Date(b[0]).getTime());
+        
+        return {
+            pageViews: {
+                labels: sortedPageViews.map(entry => new Date(entry[0]).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })),
+                data: sortedPageViews.map(entry => entry[1]),
+            },
+            topVehicles: Object.entries(topVehiclesMap).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([id, views]) => {
+                const vehicle = vehicles.find(v => v.id === Number(id));
+                return {
+                    label: vehicle ? `${vehicle.make} ${vehicle.model}` : `ID ${id}`,
+                    views,
+                }
+            }),
+            eventDistribution: eventDistributionMap,
+        };
+    }, [filteredEvents, vehicles, dateRange]);
+
 
     const handleResetConfirm = async () => {
         try {
@@ -127,6 +174,22 @@ const StatsView: React.FC<{ vehicles: Vehicle[]; allEvents: AnalyticsEvent[]; on
                 <KeyMetricCard title="Agregado a Favoritos" value={totalFavorites} icon={<HeartIcon className="h-7 w-7"/>} />
                 <KeyMetricCard title="Tasa de Contacto" value={conversionRate} icon={<TargetIcon className="h-7 w-7"/>} />
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-700">
+                    <h3 className="text-lg font-bold mb-4">Visitas a la Página por Día</h3>
+                    <PageViewsChart data={chartData.pageViews} />
+                </div>
+                 <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-700">
+                    <h3 className="text-lg font-bold mb-4">Top 5 Vehículos Más Vistos</h3>
+                    <TopVehiclesChart data={chartData.topVehicles} />
+                </div>
+                 <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-subtle dark:shadow-subtle-dark border border-slate-200 dark:border-slate-700">
+                    <h3 className="text-lg font-bold mb-4">Distribución de Eventos</h3>
+                    <EventDistributionChart data={chartData.eventDistribution} />
+                </div>
+            </div>
+
             <VehiclePerformanceTable performanceData={performanceData} />
             
             <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
