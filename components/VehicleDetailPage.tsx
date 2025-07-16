@@ -249,26 +249,31 @@ const VehicleDetailPage: React.FC<VehicleDetailPageProps> = ({ vehicle, allVehic
                 <Breadcrumb vehicle={vehicle} />
             </div>
 
+            {/* This single grid handles layout for both mobile and desktop */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12 animate-fade-in">
-                <div className="lg:col-span-7 relative overflow-hidden rounded-2xl shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
-                    <ImageCarousel images={vehicle.images} videoUrl={vehicle.video_url} onPlayVideo={onPlayVideo} />
-                    {vehicle.is_sold && (
-                        <div className="absolute top-10 -left-16 w-64 transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black text-2xl py-2 z-20 pointer-events-none shadow-lg">Vendido</div>
-                    )}
+
+                {/* Mobile Order: 1. Image */}
+                <div className="lg:col-span-7">
+                    <div className="relative overflow-hidden rounded-2xl shadow-rago-lg aspect-[4/3] bg-gray-200 dark:bg-black">
+                        <ImageCarousel images={vehicle.images} videoUrl={vehicle.video_url} onPlayVideo={onPlayVideo} />
+                        {vehicle.is_sold && (
+                            <div className="absolute top-10 -left-16 w-64 transform -rotate-45 bg-gradient-to-br from-red-600 to-red-800 text-center text-white font-black text-2xl py-2 z-20 pointer-events-none shadow-lg">Vendido</div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="lg:col-span-5">
+                {/* Mobile Order: 2 & 3. Action and Specs cards */}
+                {/* On desktop, this whole block moves to the right column and becomes sticky */}
+                <div className="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-2 h-fit lg:sticky top-28 space-y-8">
                     <ActionCard vehicle={vehicle} onWhatsAppClick={handleWhatsAppClick} onModalOpen={setModalContent} />
+                    <SpecsCard specs={specs} />
                 </div>
-            </div>
-            
-            <div className="mt-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-7 space-y-8">
+
+                {/* Mobile Order: 4 & 5. Description and Reviews */}
+                {/* On desktop, this block moves back to the left column, under the image */}
+                <div className="lg:col-span-7 lg:col-start-1 space-y-8">
                     <DescriptionCard description={vehicle.description} />
                     <VehicleReviews reviews={vehicleReviews} />
-                </div>
-                <div className="lg:col-span-5 h-fit lg:sticky top-28">
-                    <SpecsCard specs={specs} />
                 </div>
             </div>
 
