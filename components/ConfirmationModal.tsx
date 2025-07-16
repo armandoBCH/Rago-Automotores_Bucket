@@ -8,9 +8,10 @@ interface ConfirmationModalProps {
     title: string;
     message: string;
     isConfirming?: boolean;
+    children?: React.ReactNode;
 }
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, title, message, isConfirming }) => {
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, title, message, isConfirming, children }) => {
     const [isAnimatingOut, setIsAnimatingOut] = useState(false);
 
     useEffect(() => {
@@ -51,6 +52,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
                 <div className="p-6">
                     <h3 id="confirmation-title" className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h3>
                     <p className="mt-2 text-base text-gray-600 dark:text-gray-300">{message}</p>
+                    {children}
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-700/50 px-6 py-3 flex justify-end space-x-3">
                     <button

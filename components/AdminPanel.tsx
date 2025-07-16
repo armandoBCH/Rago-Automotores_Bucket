@@ -6,12 +6,14 @@
 
 
 
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Vehicle, AnalyticsEvent, SiteData, Review, FinancingConfig, ReviewUpdate } from '../types';
 import { PlusIcon, EditIcon, TrashIcon, SearchIcon, LogoutIcon, EyeIcon, ChatBubbleIcon, TargetIcon, StarIcon, CircleDollarSignIcon, GripVerticalIcon, FileCheckIcon, StatsIcon, ShareIcon, ArrowUpDownIcon, MessageSquareIcon, HeartIcon, MousePointerClickIcon, GlobeIcon, CogIcon } from '../constants';
 import { optimizeUrl } from '../utils/image';
 import ConfirmationModal from './ConfirmationModal';
-import VehiclePerformanceTable from './VehiclePerformanceTable';
+import VehiclePerformanceTable, { PerformanceData } from './VehiclePerformanceTable';
 
 interface AdminPanelProps {
     vehicles: Vehicle[];
@@ -57,17 +59,91 @@ const KeyMetricCard: React.FC<{ title: string; value: string | number; icon: Rea
 
 // --- STATS VIEW ---
 const StatsView: React.FC<{ vehicles: Vehicle[]; allEvents: AnalyticsEvent[]; onAnalyticsReset: () => void; }> = ({ vehicles, allEvents, onAnalyticsReset }) => {
-    // ... (This component remains large, so its code is omitted for brevity but is unchanged from the original file)
-    // ... For a real implementation, the full code for StatsView would be here.
     const [dateRange, setDateRange] = useState<'7d' | '30d' | 'all'>('7d');
+    const [isResetting, setIsResetting] = useState(false);
+    const [password, setPassword] = useState('');
+
     const filteredEvents = useMemo(() => {
         if (dateRange === 'all') return allEvents;
         const now = new Date();
         const daysToSubtract = dateRange === '7d' ? 7 : 30;
-        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract + 1);
+        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysToSubtract);
         return allEvents.filter(event => new Date(event.created_at) >= startDate);
     }, [allEvents, dateRange]);
-    return <div className="text-slate-500">El panel de estadísticas se mostraría aquí. Se ha omitido su código por brevedad en esta actualización.</div>;
+
+    const performanceData = useMemo<PerformanceData[]>(() => {
+        return vehicles.map(vehicle => {
+            const eventsForVehicle = filteredEvents.filter(e => e.vehicle_id === vehicle.id);
+            const views = eventsForVehicle.filter(e => e.event_type === 'view_vehicle_detail').length;
+            const contacts = eventsForVehicle.filter(e => e.event_type === 'click_whatsapp_vehicle').length;
+            const cardClicks = eventsForVehicle.filter(e => e.event_type === 'click_card_details').length;
+            const favorites = eventsForVehicle.filter(e => e.event_type === 'favorite_add').length;
+            const shares = eventsForVehicle.filter(e => e.event_type === 'click_share_vehicle').length;
+            const contactRate = views > 0 ? (contacts / views) * 100 : 0;
+            return { vehicle, views, cardClicks, contacts, shares, favorites, contactRate };
+        });
+    }, [vehicles, filteredEvents]);
+    
+    const totalViews = useMemo(() => filteredEvents.filter(e => e.event_type === 'view_vehicle_detail').length, [filteredEvents]);
+    const totalContacts = useMemo(() => filteredEvents.filter(e => e.event_type === 'click_whatsapp_vehicle').length, [filteredEvents]);
+    const totalFavorites = useMemo(() => filteredEvents.filter(e => e.event_type === 'favorite_add').length, [filteredEvents]);
+    const conversionRate = totalViews > 0 ? ((totalContacts / totalViews) * 100).toFixed(1) + '%' : '0%';
+
+    const handleResetConfirm = async () => {
+        try {
+            const response = await fetch('/api/admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'resetAnalytics', payload: { password } }),
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Error al reiniciar.');
+            }
+            onAnalyticsReset();
+            setIsResetting(false);
+            setPassword('');
+            alert('Las estadísticas han sido reiniciadas.');
+        } catch (error: any) {
+            alert(error.message);
+        }
+    };
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">Rendimiento General</h2>
+                <div className="flex bg-slate-200 dark:bg-slate-700/50 p-1 rounded-lg">
+                    {(['7d', '30d', 'all'] as const).map(range => (
+                        <button key={range} onClick={() => setDateRange(range)} className={`px-4 py-1.5 text-base font-semibold rounded-md transition-colors ${dateRange === range ? 'bg-white dark:bg-slate-800 text-rago-burgundy shadow-sm' : 'text-slate-600 dark:text-slate-300'}`}>
+                            {range === '7d' ? '7 días' : range === '30d' ? '30 días' : 'Todo'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <KeyMetricCard title="Vistas de Vehículos" value={totalViews} icon={<EyeIcon className="h-7 w-7"/>} />
+                <KeyMetricCard title="Contactos por WhatsApp" value={totalContacts} icon={<MessageSquareIcon className="h-7 w-7"/>} />
+                <KeyMetricCard title="Agregado a Favoritos" value={totalFavorites} icon={<HeartIcon className="h-7 w-7"/>} />
+                <KeyMetricCard title="Tasa de Contacto" value={conversionRate} icon={<TargetIcon className="h-7 w-7"/>} />
+            </div>
+            <VehiclePerformanceTable performanceData={performanceData} />
+            
+            <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-700">
+                 <h3 className="text-xl font-bold text-red-600 dark:text-red-500">Zona de Peligro</h3>
+                <div className="mt-4 bg-red-50 dark:bg-red-900/20 p-6 rounded-xl border border-red-200 dark:border-red-500/30">
+                     <p className="text-red-800 dark:text-red-200">Esta acción eliminará permanentemente todos los datos de análisis. No se puede deshacer.</p>
+                     <button onClick={() => setIsResetting(true)} className="mt-4 px-5 py-2 text-base font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700">
+                        Reiniciar Estadísticas
+                    </button>
+                </div>
+            </div>
+
+            {isResetting && <ConfirmationModal isOpen={true} onClose={() => setIsResetting(false)} onConfirm={handleResetConfirm} title="Confirmar Reinicio" message="Introduce tu contraseña de administrador para confirmar.">
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-4 w-full px-3 py-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md" placeholder="Contraseña de administrador"/>
+            </ConfirmationModal>}
+        </div>
+    );
 };
 
 // --- INVENTORY VIEW ---
